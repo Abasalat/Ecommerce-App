@@ -1,6 +1,7 @@
 import 'package:ecommerce_app/core/constants/app_colors.dart';
-import 'package:ecommerce_app/presentation/screens/auth/get_start_screen.dart';
 import 'package:flutter/material.dart';
+import 'core/routes/routes.dart';
+import 'core/routes/routes_name.dart';
 
 void main() {
   runApp(const MyApp());
@@ -9,14 +10,15 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: AppTheme.lightTheme,
+      title: 'E-Shop',
       debugShowCheckedModeBanner: false,
-      home: GetStartScreen(),
+      theme: AppTheme.lightTheme,
+      // Route Configuration
+      initialRoute: RoutesName.getStartedScreen,
+      onGenerateRoute: Routes.generateRoute,
     );
   }
 }
