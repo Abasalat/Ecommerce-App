@@ -1,7 +1,8 @@
-import 'dart:math';
-
-import 'package:ecommerce_app/presentation/screens/auth/login_screen.dart';
-import 'package:ecommerce_app/presentation/screens/auth/sign_up_screen.dart';
+import 'package:ecommerce_app/core/constants/app_colors.dart';
+import 'package:ecommerce_app/core/constants/app_constants.dart';
+import 'package:ecommerce_app/core/routes/routes_name.dart';
+import 'package:ecommerce_app/presentation/widgets/custom_button.dart';
+import 'package:ecommerce_app/presentation/widgets/text_link_widget.dart';
 import 'package:flutter/material.dart';
 
 class GetStartScreen extends StatelessWidget {
@@ -12,7 +13,9 @@ class GetStartScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppConstants.defaultPadding,
+          ),
           child: Column(
             children: [
               const Spacer(flex: 3),
@@ -20,22 +23,30 @@ class GetStartScreen extends StatelessWidget {
               // Logo Section
               _buildLogo(),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: AppConstants.xLargeSpacing),
 
               // Welcome Text Section
               _buildWelcomeText(context),
 
               const Spacer(flex: 2),
 
-              // Get Started Button
-              _buildGetStartedButton(context),
+              // Get Started Button using CustomButton
+              CustomButton(
+                text: AppConstants.getStartedButton,
+                onPressed: () => _handleGetStarted(context),
+              ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: AppConstants.defaultPadding),
 
-              // Already have account link
-              _buildLoginLink(context),
+              // Already have account link using TextLinkWidget
+              TextLinkWidget(
+                text: '',
+                linkText: AppConstants.alreadyHaveAccount,
+                onPressed: () => _navigateToLogin(context),
+                showArrow: true,
+              ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: AppConstants.xLargeSpacing),
             ],
           ),
         ),
@@ -54,10 +65,10 @@ class GetStartScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.blueGrey,
-              spreadRadius: 1, // how much the shadow spreads
-              blurRadius: 10, // how blurry the shadow is
-              offset: Offset(1, 1),
+              color: AppColors.shadowColor,
+              spreadRadius: 2,
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -68,13 +79,17 @@ class GetStartScreen extends StatelessWidget {
             width: 150,
             height: 150,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, StackTrace) {
+            errorBuilder: (context, error, stackTrace) {
               return Container(
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
+                  color: AppColors.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Icon(Icons.shopping_bag, size: 80, color: Colors.blue),
+                child: Icon(
+                  Icons.shopping_bag,
+                  size: 80,
+                  color: AppColors.primaryColor,
+                ),
               );
             },
           ),
@@ -90,94 +105,40 @@ class GetStartScreen extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'Welcome to E-Shop',
+          AppConstants.welcomeTitle,
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: theme.primaryColor,
+            color: AppColors.primaryColor,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppConstants.smallSpacing + 4),
         Text(
-          'Your one-stop shop for everything!',
-          style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[700]),
+          AppConstants.welcomeSubtitle,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: AppColors.textSecondary,
+          ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppConstants.smallSpacing),
         Text(
-          'Discover amazing products and deals.',
-          style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+          AppConstants.welcomeDescription,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: AppColors.textTertiary,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
-  // Get Started Button
-  Widget _buildGetStartedButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: () {
-          // Add your navigation logic here
-          _handleGetStarted(context);
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          elevation: 3,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: const Text(
-          'Let\'s Get Started',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoginLink(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _navigateToLogin(context),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'I alrady have an account',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[700],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(Icons.arrow_forward, size: 18, color: Colors.blue[700]),
-          ],
-        ),
-      ),
-    );
-  }
-
   // Navigation handler
   void _handleGetStarted(BuildContext context) {
-    // Example navigation - replace with your actual navigation logic
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SignUpScreen()),
-    );
+    Navigator.pushNamed(context, RoutesName.signUpScreen);
   }
 
   // Navigation to the Login
   void _navigateToLogin(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => LoginScreen()),
-    );
+    Navigator.pushNamed(context, RoutesName.loginScreen);
   }
 }

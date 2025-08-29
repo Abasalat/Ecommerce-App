@@ -157,14 +157,13 @@ class AppTheme {
         filled: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.inputBorderColor),
+          borderSide: const BorderSide(
+            color: Color.fromARGB(255, 255, 255, 255),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: AppColors.inputFocusedBorderColor,
-            width: 2,
-          ),
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: Colors.blue, width: 2),
         ),
       ),
     );
