@@ -1,5 +1,6 @@
 import 'package:ecommerce_app/core/constants/app_colors.dart';
 import 'package:ecommerce_app/core/constants/app_constants.dart';
+import 'package:ecommerce_app/core/services/auth_service.dart';
 import 'package:ecommerce_app/core/routes/routes_name.dart';
 import 'package:ecommerce_app/presentation/widgets/custom_button.dart';
 import 'package:ecommerce_app/presentation/widgets/custom_text_field.dart';
@@ -14,6 +15,7 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final AuthService _authService = AuthService();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -23,6 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
+    // Cleaning up the controllers when the widget is disposed
     _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -45,63 +48,59 @@ class _SignUpScreenState extends State<SignUpScreen> {
               padding: EdgeInsets.only(
                 left: AppConstants.defaultPadding,
                 right: AppConstants.defaultPadding,
-                bottom: keyboardHeight > 0
-                    ? 20
-                    : 0, // Add padding when keyboard is visible
+                bottom: keyboardHeight > 0 ? 20 : 0,
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Center(
-                  child: Column(
-                    children: [
-                      // Dynamic top spacing based on screen size and keyboard visibility
-                      SizedBox(
-                        height: isKeyboardVisible
-                            ? AppConstants.mediumSpacing
-                            : screenHeight * 0.05,
-                      ),
+                child: Column(
+                  children: [
+                    // Dynamic top spacing based on screen size and keyboard visibility
+                    SizedBox(
+                      height: isKeyboardVisible
+                          ? AppConstants.mediumSpacing
+                          : screenHeight * 0.05,
+                    ),
 
-                      // Sign Up header
-                      _buildSignUpHeader(),
+                    // Sign Up header
+                    _buildSignUpHeader(),
 
-                      SizedBox(
-                        height: isKeyboardVisible
-                            ? AppConstants.largeSpacing
-                            : AppConstants.xLargeSpacing,
-                      ),
+                    SizedBox(
+                      height: isKeyboardVisible
+                          ? AppConstants.largeSpacing
+                          : AppConstants.xLargeSpacing,
+                    ),
 
-                      // Sign Up Form
-                      _buildSignUpForm(),
+                    // Sign Up Form
+                    _buildSignUpForm(),
 
-                      SizedBox(
-                        height: isKeyboardVisible
-                            ? AppConstants.mediumSpacing
-                            : AppConstants.xLargeSpacing,
-                      ),
+                    SizedBox(
+                      height: isKeyboardVisible
+                          ? AppConstants.mediumSpacing
+                          : AppConstants.xLargeSpacing,
+                    ),
 
-                      // Sign Up Button
-                      CustomButton(
-                        text: AppConstants.signUpButton,
-                        onPressed: _handleSignUp,
-                        isLoading: _isLoading,
-                      ),
+                    // Sign Up Button
+                    CustomButton(
+                      text: AppConstants.signUpButton,
+                      onPressed: _handleSignUp,
+                      isLoading: _isLoading,
+                    ),
 
-                      const SizedBox(height: AppConstants.mediumSpacing),
+                    const SizedBox(height: AppConstants.mediumSpacing),
 
-                      // Navigate to Login Screen
-                      TextLinkWidget(
-                        text: AppConstants.alreadyHaveAccountSignUp,
-                        linkText: AppConstants.loginLink,
-                        onPressed: _navigateToLogin,
-                      ),
+                    // Navigate to Login Screen
+                    TextLinkWidget(
+                      text: AppConstants.alreadyHaveAccountSignUp,
+                      linkText: AppConstants.loginLink,
+                      onPressed: _navigateToLogin,
+                    ),
 
-                      SizedBox(
-                        height: isKeyboardVisible
-                            ? AppConstants.mediumSpacing
-                            : AppConstants.xLargeSpacing,
-                      ),
-                    ],
-                  ),
+                    SizedBox(
+                      height: isKeyboardVisible
+                          ? AppConstants.mediumSpacing
+                          : AppConstants.xLargeSpacing,
+                    ),
+                  ],
                 ),
               ),
             );
@@ -123,9 +122,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           AppConstants.signUpTitle,
           style: theme.textTheme.headlineLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            fontSize: isKeyboardVisible
-                ? 36
-                : 48, // Reduce font size when keyboard is visible
+            fontSize: isKeyboardVisible ? 36 : 48,
             color: AppColors.primaryColor,
           ),
         ),
@@ -182,32 +179,73 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
+  // Handle Sign Up Logic with Firebase
   Future<void> _handleSignUp() async {
+    // Basic validation
+    if (_fullNameController.text.trim().isEmpty) {
+      _showError('Please enter your full name');
+      return;
+    }
+
+    if (_fullNameController.text.trim().length < 2) {
+      _showError('Full name must be at least 2 characters long');
+      return;
+    }
+
+    if (_emailController.text.trim().isEmpty) {
+      _showError('Please enter your email');
+      return;
+    }
+
+    if (!_isValidEmail(_emailController.text.trim())) {
+      _showError('Please enter a valid email address');
+      return;
+    }
+
+    if (_passwordController.text.isEmpty) {
+      _showError('Please enter a password');
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      _showError('Password must be at least 6 characters long');
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showError('Passwords do not match');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      await Future.delayed(const Duration(seconds: 2));
+      // Sign up with Firebase
+      await _authService.signUpWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        fullName: _fullNameController.text.trim(),
+      );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(AppConstants.signUpSuccess),
-            backgroundColor: AppColors.successColor,
-          ),
-        );
+        _showSuccess('Account created successfully! Welcome to E-Shop!');
 
-        Navigator.pushReplacementNamed(context, RoutesName.loginScreen);
+        // Wait a bit to show success message
+        await Future.delayed(const Duration(milliseconds: 1500));
+
+        // Navigate to home screen directly
+        // The AuthWrapper will automatically detect the authenticated user
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          RoutesName.homeScreen,
+          (route) => false, // Clear all previous routes
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sign up failed: ${e.toString()}'),
-            backgroundColor: AppColors.errorColor,
-          ),
-        );
+        _showError(e.toString());
       }
     } finally {
       if (mounted) {
@@ -220,5 +258,50 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void _navigateToLogin() {
     Navigator.pushReplacementNamed(context, RoutesName.loginScreen);
+  }
+
+  // Helper method to validate email format
+  bool _isValidEmail(String email) {
+    return RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(email);
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: AppColors.errorColor,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: AppColors.successColor,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 }

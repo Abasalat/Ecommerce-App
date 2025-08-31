@@ -1,4 +1,5 @@
 import 'package:ecommerce_app/core/constants/app_colors.dart';
+import 'package:ecommerce_app/core/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/routes_name.dart';
@@ -14,6 +15,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -127,12 +129,8 @@ class _LoginScreenState extends State<LoginScreen> {
       alignment: Alignment.centerRight,
       child: TextButton(
         onPressed: () {
-          // TODO: Implement forgot password
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Forgot password feature coming soon!'),
-            ),
-          );
+          // Navigate to Forgot Password screen
+          Navigator.pushNamed(context, RoutesName.forgotPasswordScreen);
         },
         child: Text(
           AppConstants.forgotPassword,
@@ -146,22 +144,29 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    // Basic validation
+    if (_emailController.text.trim().isEmpty) {
+      _showError('Please enter your email');
+      return;
+    }
+
+    if (_passwordController.text.isEmpty) {
+      _showError('Please enter your password');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // TODO: Implement actual login logic here
-      // For now, just simulate a delay
-      await Future.delayed(const Duration(seconds: 2));
+      await _authService.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(AppConstants.loginSuccess),
-            backgroundColor: AppColors.successColor,
-          ),
-        );
+        _showSuccess('Login successful!');
 
         // Navigate to home screen
         Navigator.pushNamedAndRemoveUntil(
@@ -172,12 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login failed: ${e.toString()}'),
-            backgroundColor: AppColors.errorColor,
-          ),
-        );
+        _showError(e.toString());
       }
     } finally {
       if (mounted) {
@@ -186,6 +186,26 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.errorColor,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.successColor,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   void _navigateToSignUp() {

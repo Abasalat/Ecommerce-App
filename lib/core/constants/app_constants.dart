@@ -31,6 +31,17 @@ class AppConstants {
   static const String alreadyHaveAccountSignUp = 'Already have an account?';
   static const String loginLink = 'Login';
 
+  // Forgot Password Screen
+  static const String forgotPasswordTitle = 'Forgot Password';
+  static const String forgotPasswordSubtitle =
+      'Enter your email to reset your password.';
+  static const String resetPasswordButton = 'Send Reset Link';
+  static const String backToLogin = 'Back to Login';
+  static const String resetEmailSent =
+      'Password reset email sent! Check your inbox.';
+  static const String resetEmailNotSent =
+      'Failed to send reset email. Please try again.';
+
   // Validation Messages
   static const String emailRequired = 'Email is required';
   static const String emailInvalid = 'Enter a valid email address';

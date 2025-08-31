@@ -1,3 +1,5 @@
+import 'package:ecommerce_app/presentation/screens/auth/forgot_password_screen.dart';
+import 'package:ecommerce_app/presentation/screens/userprofile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:ecommerce_app/presentation/screens/auth/get_start_screen.dart';
 import 'package:ecommerce_app/presentation/screens/auth/login_screen.dart';
@@ -17,12 +19,15 @@ class Routes {
       case RoutesName.signUpScreen:
         return _createRoute(const SignUpScreen());
 
+      case RoutesName.forgotPasswordScreen:
+        return _createRoute(const ForgotPasswordScreen());
+
       case RoutesName.homeScreen:
         return _createRoute(const HomeScreen());
 
       // Add more routes as needed
-      // case RoutesName.profileScreen:
-      //   return _createRoute(const ProfileScreen());
+      case RoutesName.profileScreen:
+        return _createRoute(const ProfileScreen());
 
       default:
         return MaterialPageRoute(
