@@ -3,10 +3,11 @@ class RoutesName {
   static const String getStartedScreen = '/get_started';
   static const String loginScreen = '/login';
   static const String signUpScreen = '/signup';
+  static const String forgotPasswordScreen = '/forgot_password';
 
   // Main App Routes
   static const String homeScreen = '/home';
-  // static const String profileScreen = '/profile';
+  static const String profileScreen = '/profile';
   // static const String cartScreen = '/cart';
 
   // Additional Routes (for future use)
