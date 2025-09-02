@@ -1,6 +1,6 @@
 import 'package:ecommerce_app/core/constants/app_colors.dart';
 import 'package:ecommerce_app/core/constants/app_constants.dart';
-import 'package:ecommerce_app/core/services/auth_service.dart';
+import 'package:ecommerce_app/data/services/auth_service.dart';
 import 'package:ecommerce_app/core/routes/routes_name.dart';
 import 'package:ecommerce_app/presentation/widgets/custom_button.dart';
 import 'package:ecommerce_app/presentation/widgets/custom_text_field.dart';
