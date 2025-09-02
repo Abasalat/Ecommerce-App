@@ -10,6 +10,10 @@ class RoutesName {
   static const String profileScreen = '/profile';
   // static const String cartScreen = '/cart';
 
+  static const String categoryProductsScreen = '/category_products';
+
+  static String get allCategoriesScreen => '/all_categories';
+
   // Additional Routes (for future use)
   // static const String productDetailsScreen = '/product_details';
   // static const String ordersScreen = '/orders';

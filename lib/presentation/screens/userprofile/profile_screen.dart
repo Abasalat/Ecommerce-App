@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/routes_name.dart';
-import '../../../core/services/auth_service.dart';
+import 'package:ecommerce_app/data/services/auth_service.dart';
 import '../../widgets/custom_button.dart';
 
 class ProfileScreen extends StatefulWidget {

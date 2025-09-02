@@ -1,5 +1,5 @@
 import 'package:ecommerce_app/core/constants/app_colors.dart';
-import 'package:ecommerce_app/core/services/auth_service.dart';
+import 'package:ecommerce_app/data/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/routes_name.dart';
