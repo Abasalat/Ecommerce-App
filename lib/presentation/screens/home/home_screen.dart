@@ -1,4 +1,7 @@
+import 'package:ecommerce_app/data/models/product.dart';
 import 'package:ecommerce_app/data/repositories/category_repository.dart';
+import 'package:ecommerce_app/data/repositories/product_repository.dart';
+import 'package:ecommerce_app/presentation/widgets/top_products_section.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
@@ -8,24 +11,30 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State {
   late final CategoryRepository _categoryRepo;
-  late final Future<List<CategoryPreview>> _future;
+  late final ProductRepository _productRepo;
+  late final Future<List<CategoryPreview>> _categoriesFuture;
+  late final Future<List<Product>> _topProductsFuture;
 
   @override
   void initState() {
     super.initState();
-    // Creates the repository with API client
-    _categoryRepo = CategoryRepository(const ApiClient());
+    // Create repositories
+    final apiClient = const ApiClient();
+    _categoryRepo = CategoryRepository(apiClient);
+    _productRepo = ProductRepository(apiClient);
 
-    // Starts the data fetching process
-    _future = _categoryRepo.fetchTopCategoriesWithPreviews(
-      categoryLimit: 6, // Get 6 categories
-      productPerCategory: 4, // Get 4 products per category
+    // Start data fetching
+    _categoriesFuture = _categoryRepo.fetchTopCategoriesWithPreviews(
+      categoryLimit: 6,
+      productPerCategory: 4,
     );
+
+    _topProductsFuture = _productRepo.fetchTopProducts(limit: 8);
   }
 
   @override
@@ -99,27 +108,54 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // i have Updated your _buildBody method
   Widget _buildBody() {
     return SafeArea(
-      child: Column(
-        children: [
+      child: CustomScrollView(
+        slivers: [
           // Welcome Banner Section
-          _buildWelcomeBanner(),
+          SliverToBoxAdapter(child: _buildWelcomeBanner()),
 
-          // Categories Section
-          Expanded(
+          // Categories Section Header
+          SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Header row with improved styling
-                  _buildSectionHeader(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: _buildSectionHeader(),
+            ),
+          ),
 
-                  const SizedBox(height: 16),
+          // Categories Grid
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            sliver: _buildCategoriesGrid(),
+          ),
 
-                  // Categories Grid
-                  Expanded(child: _buildCategoriesGrid()),
-                ],
+          // Top Products Section
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: TopProductsSection(
+                productRepository: _productRepo,
+                title: 'Top Products',
+                productLimit: 8,
+                onSeeAllTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('See all top products coming soon!'),
+                      backgroundColor: AppColors.infoColor,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                onProductTap: (product) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Product: ${product.name}'),
+                      backgroundColor: AppColors.successColor,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -190,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Shop by Categories',
+          'Categories',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 24,
@@ -229,22 +265,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCategoriesGrid() {
     return FutureBuilder<List<CategoryPreview>>(
-      future: _future,
+      future: _categoriesFuture,
       builder: (context, snapshot) {
         // Loading State
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildLoadingState();
+          return SliverToBoxAdapter(child: _buildLoadingState());
         }
 
         // Error State
         if (snapshot.hasError) {
-          return _buildErrorState(snapshot.error.toString());
+          return SliverToBoxAdapter(
+            child: _buildErrorState(snapshot.error.toString()),
+          );
         }
 
         // Success State
         final categories = snapshot.data ?? [];
         if (categories.isEmpty) {
-          return _buildEmptyState();
+          return SliverToBoxAdapter(child: _buildEmptyState());
         }
 
         return _buildCategoryGrid(categories);
@@ -318,10 +356,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ElevatedButton.icon(
               onPressed: () {
                 setState(() {
-                  _future = _categoryRepo.fetchTopCategoriesWithPreviews(
-                    categoryLimit: 6,
-                    productPerCategory: 4,
-                  );
+                  _categoriesFuture = _categoryRepo
+                      .fetchTopCategoriesWithPreviews(
+                        categoryLimit: 6,
+                        productPerCategory: 4,
+                      );
                 });
               },
               icon: const Icon(Icons.refresh),
@@ -378,24 +417,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoryGrid(List<CategoryPreview> categories) {
-    return GridView.builder(
-      padding: const EdgeInsets.only(top: 4, bottom: 8),
-      itemCount: categories.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.9,
-      ),
-      itemBuilder: (context, index) {
+  Widget _buildCategoryGrid(List categories) {
+    return SliverGrid(
+      delegate: SliverChildBuilderDelegate((context, index) {
         final category = categories[index];
         return CategoryCard(
           title: category.name,
           imageUrls: category.imageUrls,
           onTap: () => _navigateToCategory(category),
         );
-      },
+      }, childCount: categories.length),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.9,
+      ),
     );
   }
 

@@ -26,7 +26,7 @@ class CategoryCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surfaceColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.borderColor, width: 1),
           boxShadow: [
             BoxShadow(
@@ -37,8 +37,8 @@ class CategoryCard extends StatelessWidget {
             ),
             BoxShadow(
               color: AppColors.shadowColor,
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
               spreadRadius: 0,
             ),
           ],
@@ -49,9 +49,9 @@ class CategoryCard extends StatelessWidget {
             // Product Images Grid (2x2)
             Expanded(
               child: Container(
-                margin: const EdgeInsets.all(8),
+                margin: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   color: AppColors.inputFillColor,
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -62,53 +62,48 @@ class CategoryCard extends StatelessWidget {
             // Category Title Section
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.surfaceColor,
                 border: Border(
                   top: BorderSide(color: AppColors.borderColor, width: 0.5),
                 ),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _formatCategoryName(title),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${imageUrls.length} items',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    _formatCategoryName(title),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.arrow_forward_ios,
-                      size: 12,
-                      color: AppColors.primaryColor,
+                  const SizedBox(height: 2),
+                  Text(
+                    '${imageUrls.length} items',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
+
+                  // Container(
+                  //   padding: const EdgeInsets.all(6),
+                  //   decoration: BoxDecoration(
+                  //     color: AppColors.primaryColor.withOpacity(0.1),
+                  //     borderRadius: BorderRadius.circular(8),
+                  //   ),
+                  //   child: Icon(
+                  //     Icons.arrow_forward_ios,
+                  //     size: 12,
+                  //     color: AppColors.primaryColor,
+                  //   ),
+                  // ),
                 ],
               ),
             ),
@@ -120,13 +115,13 @@ class CategoryCard extends StatelessWidget {
 
   Widget _buildProductImagesGrid(List<String?> gridImages) {
     return GridView.builder(
-      padding: EdgeInsets.zero,
+      padding: EdgeInsets.all(10),
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 2,
         crossAxisSpacing: 2,
-        childAspectRatio: 1,
+        childAspectRatio: 1.2,
       ),
       itemCount: 4,
       itemBuilder: (context, index) {
@@ -147,7 +142,7 @@ class CategoryCard extends StatelessWidget {
           ? _buildPlaceholderImage(index)
           : Image.network(
               imageUrl,
-              fit: BoxFit.cover,
+              fit: BoxFit.fill,
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return _buildLoadingImage();
