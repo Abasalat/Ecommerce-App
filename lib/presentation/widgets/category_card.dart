@@ -49,7 +49,7 @@ class CategoryCard extends StatelessWidget {
             // Product Images Grid (2x2)
             Expanded(
               child: Container(
-                margin: const EdgeInsets.all(10),
+                margin: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: AppColors.inputFillColor,
