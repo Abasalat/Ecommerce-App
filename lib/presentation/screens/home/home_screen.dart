@@ -1,6 +1,7 @@
 import 'package:ecommerce_app/data/models/product.dart';
 import 'package:ecommerce_app/data/repositories/category_repository.dart';
 import 'package:ecommerce_app/data/repositories/product_repository.dart';
+import 'package:ecommerce_app/presentation/widgets/flash_sale_section.dart';
 import 'package:ecommerce_app/presentation/widgets/new_items_section.dart';
 import 'package:ecommerce_app/presentation/widgets/top_products_section.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class _HomeScreenState extends State {
   late final ProductRepository _productRepo;
   late final Future<List<CategoryPreview>> _categoriesFuture;
   late final Future<List<Product>> _topProductsFuture;
+  late final Future<List<Product>> _flashSaleProductsFuture;
 
   @override
   void initState() {
@@ -36,6 +38,8 @@ class _HomeScreenState extends State {
     );
 
     _topProductsFuture = _productRepo.fetchTopProducts(limit: 8);
+
+    _flashSaleProductsFuture = _productRepo.fetchSaleProducts(limit: 6);
   }
 
   @override
@@ -190,6 +194,14 @@ class _HomeScreenState extends State {
                   );
                 },
               ),
+            ),
+          ),
+
+          // Flash Sale Section - Added here
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: FlashSaleSection(productRepository: _productRepo),
             ),
           ),
         ],
