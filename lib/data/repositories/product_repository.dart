@@ -71,4 +71,31 @@ class ProductRepository {
     }
     return const [];
   }
+
+  /// Fetch products that are on sale (discountPercentage > 0)
+  Future<List<Product>> fetchSaleProducts({int limit = 6}) async {
+    final url =
+        '${ApiEndpoints.limitedProductsUrl(100)}'; // Adjust if you have a dedicated sale endpoint
+
+    final json = await _client.getJson(url);
+    final list = json['products'];
+
+    if (list is List) {
+      final products = list
+          .whereType<Map<String, dynamic>>()
+          .map(Product.fromJson)
+          .where(
+            (product) => (product.discountPercentage ?? 0) > 0,
+          ) // Filter by discount
+          .toList();
+
+      // Optionally sort by highest discount or rating
+      products.sort(
+        (a, b) => b.discountPercentage!.compareTo(a.discountPercentage!),
+      );
+
+      return products.take(limit).toList(growable: false);
+    }
+    return const [];
+  }
 }
