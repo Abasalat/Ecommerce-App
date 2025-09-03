@@ -1,6 +1,7 @@
 import 'package:ecommerce_app/data/models/product.dart';
 import 'package:ecommerce_app/data/repositories/category_repository.dart';
 import 'package:ecommerce_app/data/repositories/product_repository.dart';
+import 'package:ecommerce_app/presentation/widgets/new_items_section.dart';
 import 'package:ecommerce_app/presentation/widgets/top_products_section.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
@@ -151,6 +152,38 @@ class _HomeScreenState extends State {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Product: ${product.name}'),
+                      backgroundColor: AppColors.successColor,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // New Items Section - ADD THIS
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: NewItemsSection(
+                productRepository: _productRepo,
+                title: 'New Items',
+                productLimit: 8,
+                onSeeAllTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('See all new items coming soon!'),
+                      backgroundColor: AppColors.infoColor,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                onProductTap: (product) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'New Item: ${product.name} - \$${product.price}',
+                      ),
                       backgroundColor: AppColors.successColor,
                       behavior: SnackBarBehavior.floating,
                     ),

@@ -47,4 +47,28 @@ class ProductRepository {
     }
     return const [];
   }
+
+  /// Fetch new products (recently added products - you can modify logic as needed)
+  Future<List<Product>> fetchNewProducts({int limit = 10}) async {
+    // For demo purposes, we'll get products and sort by ID (assuming higher ID = newer)
+    // In a real app, you might have a 'createdAt' field or a separate endpoint
+    final url = '${ApiEndpoints.limitedProductsUrl(50)}';
+
+    final json = await _client.getJson(url);
+    final list = json['products'];
+
+    if (list is List) {
+      final products = list
+          .whereType<Map<String, dynamic>>()
+          .map(Product.fromJson)
+          .toList();
+
+      // Sort by ID descending (assuming higher ID = newer product)
+      // You can modify this logic based on your API structure
+      products.sort((a, b) => (b.id ?? 0).compareTo(a.id ?? 0));
+
+      return products.take(limit).toList(growable: false);
+    }
+    return const [];
+  }
 }
