@@ -38,4 +38,8 @@ class Product {
       thumbnail: json['thumbnail']?.toString(),
     );
   }
+
+  get stock => null;
+
+  get discountPercentage => null;
 }
