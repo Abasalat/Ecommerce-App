@@ -5,6 +5,7 @@ class Product {
   final double? price;
   final double? discountPercentage;
   final double? rating;
+  final double? stock;
   final String? brand;
   final List<String> images;
   final String? thumbnail;
@@ -15,6 +16,7 @@ class Product {
     required this.category,
     required this.images,
     this.price,
+    this.stock,
     this.discountPercentage,
     this.rating,
     this.brand,
@@ -37,6 +39,7 @@ class Product {
       price: json['price'] is num ? (json['price'] as num).toDouble() : null,
       discountPercentage: (json['discountPercentage'] ?? 0.0).toDouble(),
       rating: json['rating'] is num ? (json['rating'] as num).toDouble() : null,
+      stock: json['stock'] is num ? (json['stock'] as num).toDouble() : null,
       brand: json['brand']?.toString(),
       thumbnail: json['thumbnail']?.toString(),
     );
