@@ -2,6 +2,7 @@ import 'package:ecommerce_app/data/models/product.dart';
 import 'package:ecommerce_app/data/repositories/category_repository.dart';
 import 'package:ecommerce_app/data/repositories/product_repository.dart';
 import 'package:ecommerce_app/presentation/widgets/flash_sale_section.dart';
+import 'package:ecommerce_app/presentation/widgets/most_popular_section.dart';
 import 'package:ecommerce_app/presentation/widgets/new_items_section.dart';
 import 'package:ecommerce_app/presentation/widgets/top_products_section.dart';
 import 'package:flutter/material.dart';
@@ -202,6 +203,40 @@ class _HomeScreenState extends State {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: FlashSaleSection(productRepository: _productRepo),
+            ),
+          ),
+
+          // Most Popular Section - ADD THIS
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: MostPopularSection(
+                productRepository: _productRepo,
+                title: 'Most Popular',
+                productLimit: 8,
+                onSeeAllTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                        'See all popular products coming soon!',
+                      ),
+                      backgroundColor: AppColors.infoColor,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                onProductTap: (product) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Popular: ${product.name} - ${product.loveCount} loves',
+                      ),
+                      backgroundColor: AppColors.successColor,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],

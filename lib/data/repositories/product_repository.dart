@@ -98,4 +98,30 @@ class ProductRepository {
     }
     return const [];
   }
+
+  /// Fetch most popular products (based on high ratings and reviews)
+  Future<List<Product>> fetchMostPopularProducts({int limit = 10}) async {
+    // Get products and sort by a combination of rating and popularity factors
+    final url = '${ApiEndpoints.limitedProductsUrl(100)}';
+
+    final json = await _client.getJson(url);
+    final list = json['products'];
+
+    if (list is List) {
+      final products = list
+          .whereType<Map<String, dynamic>>()
+          .map(Product.fromJson)
+          .toList();
+
+      // Sort by popularity score: rating * stock (popular items have good ratings and availability)
+      products.sort((a, b) {
+        final scoreA = (a.rating ?? 0) * (a.stock ?? 1);
+        final scoreB = (b.rating ?? 0) * (b.stock ?? 1);
+        return scoreB.compareTo(scoreA);
+      });
+
+      return products.take(limit).toList(growable: false);
+    }
+    return const [];
+  }
 }
