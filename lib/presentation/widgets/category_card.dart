@@ -1,3 +1,4 @@
+import 'package:ecommerce_app/presentation/widgets/shimmer_skeletons.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
@@ -176,17 +177,11 @@ class CategoryCard extends StatelessWidget {
   }
 
   Widget _buildLoadingImage() {
-    return Container(
-      color: AppColors.inputFillColor,
-      child: Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.primaryColor,
-          ),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) => ShimmerBox(
+        w: constraints.maxWidth,
+        h: constraints.maxHeight,
+        r: const BorderRadius.all(Radius.circular(8)),
       ),
     );
   }

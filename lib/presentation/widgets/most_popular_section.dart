@@ -1,3 +1,4 @@
+import 'package:ecommerce_app/presentation/widgets/shimmer_skeletons.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/product_repository.dart';
@@ -57,7 +58,13 @@ class _MostPopularSectionState extends State<MostPopularSection> {
       future: _productsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildLoadingState();
+          return const Column(
+            children: [
+              ShimmerSectionHeader(),
+              SizedBox(height: 8),
+              ShimmerPopularRow(count: 8),
+            ],
+          );
         }
 
         if (snapshot.hasError) {
@@ -393,13 +400,11 @@ class _MostPopularSectionState extends State<MostPopularSection> {
   }
 
   Widget _buildLoadingImage() {
-    return Container(
-      color: AppColors.inputFillColor,
-      child: Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: AppColors.primaryColor,
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) => ShimmerBox(
+        w: constraints.maxWidth,
+        h: constraints.maxHeight,
+        r: const BorderRadius.all(Radius.circular(8)),
       ),
     );
   }
@@ -417,34 +422,34 @@ class _MostPopularSectionState extends State<MostPopularSection> {
     );
   }
 
-  Widget _buildLoadingState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.title,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 180,
-            child: Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primaryColor,
-                strokeWidth: 2,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildLoadingState() {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 16),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Text(
+  //           widget.title,
+  //           style: TextStyle(
+  //             color: AppColors.textPrimary,
+  //             fontSize: 20,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 12),
+  //         SizedBox(
+  //           height: 180,
+  //           child: Center(
+  //             child: CircularProgressIndicator(
+  //               color: AppColors.primaryColor,
+  //               strokeWidth: 2,
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildErrorState() {
     return Padding(

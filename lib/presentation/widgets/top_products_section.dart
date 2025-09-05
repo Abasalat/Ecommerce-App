@@ -1,3 +1,4 @@
+import 'package:ecommerce_app/presentation/widgets/shimmer_skeletons.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/product_repository.dart';
@@ -46,8 +47,15 @@ class _TopProductsSectionState extends State<TopProductsSection> {
       future: _productsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildLoadingState();
+          return Column(
+            children: const [
+              SizedBox(height: 10),
+              ShimmerSectionHeader(),
+              ShimmerAvatarRow(count: 8), // round avatars row
+            ],
+          );
         }
+
         if (snapshot.hasError) {
           return _buildErrorState();
         }
@@ -79,7 +87,7 @@ class _TopProductsSectionState extends State<TopProductsSection> {
         SizedBox(height: 10),
         _buildSectionHeader(),
         // Products List
-        SizedBox(height: 120, child: _buildProductsList(products)),
+        SizedBox(height: 125, child: _buildProductsList(products)),
       ],
     );
   }
@@ -168,34 +176,34 @@ class _TopProductsSectionState extends State<TopProductsSection> {
     );
   }
 
-  Widget _buildLoadingState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.title,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 120,
-            child: Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primaryColor,
-                strokeWidth: 2,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildLoadingState() {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 16),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Text(
+  //           widget.title,
+  //           style: TextStyle(
+  //             color: AppColors.textPrimary,
+  //             fontSize: 20,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 12),
+  //         SizedBox(
+  //           height: 120,
+  //           child: Center(
+  //             child: CircularProgressIndicator(
+  //               color: AppColors.primaryColor,
+  //               strokeWidth: 2,
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildErrorState() {
     return Padding(

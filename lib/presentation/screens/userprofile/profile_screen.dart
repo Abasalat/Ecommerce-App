@@ -48,6 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: const Text('Profile'),
         backgroundColor: AppColors.surfaceColor,
+        automaticallyImplyLeading: false,
         elevation: 1,
         actions: [
           IconButton(icon: const Icon(Icons.logout), onPressed: _handleSignOut),
