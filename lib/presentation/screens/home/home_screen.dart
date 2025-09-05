@@ -2,9 +2,11 @@ import 'package:ecommerce_app/data/models/product.dart';
 import 'package:ecommerce_app/data/repositories/category_repository.dart';
 import 'package:ecommerce_app/data/repositories/product_repository.dart';
 import 'package:ecommerce_app/presentation/widgets/flash_sale_section.dart';
+import 'package:ecommerce_app/presentation/widgets/just_for_you_section.dart';
 import 'package:ecommerce_app/presentation/widgets/most_popular_section.dart';
 import 'package:ecommerce_app/presentation/widgets/new_items_section.dart';
 import 'package:ecommerce_app/presentation/widgets/top_products_section.dart';
+import 'package:ecommerce_app/presentation/widgets/shimmer_skeletons.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
@@ -24,6 +26,15 @@ class _HomeScreenState extends State {
   late final Future<List<Product>> _topProductsFuture;
   late final Future<List<Product>> _flashSaleProductsFuture;
 
+  final _scroll = ScrollController();
+
+  bool _firstSectionLoaded = false;
+  bool _topReady = false;
+  bool _newReady = false;
+  bool _flashReady = false;
+  bool _popularReady = false;
+  bool _jfyReady = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,9 +49,32 @@ class _HomeScreenState extends State {
       productPerCategory: 4,
     );
 
-    _topProductsFuture = _productRepo.fetchTopProducts(limit: 8);
+    // when categories resolve (success OR error), unlock scroll
+    _categoriesFuture.whenComplete(() {
+      if (mounted) setState(() => _firstSectionLoaded = true);
+    });
 
-    _flashSaleProductsFuture = _productRepo.fetchSaleProducts(limit: 6);
+    _scroll.addListener(_maybeStartLazySections);
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _maybeStartLazySections() {
+    if (!_firstSectionLoaded) return;
+    final offset = _scroll.position.pixels;
+    final vp = _scroll.position.viewportDimension;
+
+    if (!_topReady && offset > vp * 0.10) setState(() => _topReady = true);
+    if (!_newReady && offset > vp * 0.45) setState(() => _newReady = true);
+    if (!_flashReady && offset > vp * 0.80) setState(() => _flashReady = true);
+    if (!_popularReady && offset > vp * 1.10)
+      setState(() => _popularReady = true);
+    if (!_jfyReady && offset > vp * 1.20)
+      setState(() => _jfyReady = true); // was 1.80
   }
 
   @override
@@ -114,15 +148,18 @@ class _HomeScreenState extends State {
     );
   }
 
-  // i have Updated your _buildBody method
   Widget _buildBody() {
+    final physics = _firstSectionLoaded
+        ? const BouncingScrollPhysics()
+        : const NeverScrollableScrollPhysics();
+
     return SafeArea(
       child: CustomScrollView(
+        controller: _scroll,
+        physics: physics,
         slivers: [
-          // Welcome Banner Section
           SliverToBoxAdapter(child: _buildWelcomeBanner()),
 
-          // Categories Section Header
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -130,113 +167,81 @@ class _HomeScreenState extends State {
             ),
           ),
 
-          // Categories Grid
+          // Categories Grid (with shimmer while waiting)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             sliver: _buildCategoriesGrid(),
           ),
 
-          // Top Products Section
+          // ---- Top Products ----
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
-              child: TopProductsSection(
-                productRepository: _productRepo,
-                title: 'Top Products',
-                productLimit: 8,
-                onSeeAllTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('See all top products coming soon!'),
-                      backgroundColor: AppColors.infoColor,
-                      behavior: SnackBarBehavior.floating,
+              child: !_firstSectionLoaded || !_topReady
+                  ? const SizedBox.shrink() // was: _TopProductsShimmer()
+                  : TopProductsSection(
+                      productRepository: _productRepo,
+                      title: 'Top Products',
+                      productLimit: 8,
+                      onSeeAllTap: () {},
+                      onProductTap: (p) {},
                     ),
-                  );
-                },
-                onProductTap: (product) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Product: ${product.name}'),
-                      backgroundColor: AppColors.successColor,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-              ),
             ),
           ),
 
-          // New Items Section - ADD THIS
+          // ---- New Items ----
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 20),
-              child: NewItemsSection(
-                productRepository: _productRepo,
-                title: 'New Items',
-                productLimit: 8,
-                onSeeAllTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('See all new items coming soon!'),
-                      backgroundColor: AppColors.infoColor,
-                      behavior: SnackBarBehavior.floating,
+              child: !_firstSectionLoaded || !_newReady
+                  ? const SizedBox.shrink() // was: _NewItemsShimmer()
+                  : NewItemsSection(
+                      productRepository: _productRepo,
+                      title: 'New Items',
+                      productLimit: 8,
+                      onSeeAllTap: () {},
+                      onProductTap: (p) {},
                     ),
-                  );
-                },
-                onProductTap: (product) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'New Item: ${product.name} - \$${product.price}',
-                      ),
-                      backgroundColor: AppColors.successColor,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-              ),
             ),
           ),
 
-          // Flash Sale Section - Added here
+          // ---- Flash Sale ----
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
-              child: FlashSaleSection(productRepository: _productRepo),
+              child: !_firstSectionLoaded || !_flashReady
+                  ? const SizedBox.shrink() // was: _FlashSaleShimmer()
+                  : FlashSaleSection(productRepository: _productRepo),
             ),
           ),
 
-          // Most Popular Section - ADD THIS
+          // ---- Most Popular ----
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 20),
-              child: MostPopularSection(
-                productRepository: _productRepo,
-                title: 'Most Popular',
-                productLimit: 8,
-                onSeeAllTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text(
-                        'See all popular products coming soon!',
-                      ),
-                      backgroundColor: AppColors.infoColor,
-                      behavior: SnackBarBehavior.floating,
+              child: !_firstSectionLoaded || !_popularReady
+                  ? const SizedBox.shrink() // was: _MostPopularShimmer()
+                  : MostPopularSection(
+                      productRepository: _productRepo,
+                      title: 'Most Popular',
+                      productLimit: 8,
+                      onSeeAllTap: () {},
+                      onProductTap: (p) {},
                     ),
-                  );
-                },
-                onProductTap: (product) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Popular: ${product.name} - ${product.loveCount} loves',
-                      ),
-                      backgroundColor: AppColors.successColor,
-                      behavior: SnackBarBehavior.floating,
+            ),
+          ),
+
+          // ---- Just For You ----
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: !_firstSectionLoaded || !_jfyReady
+                  ? const SizedBox.shrink() // was: _JustForYouShimmer()
+                  : JustForYouSection(
+                      productRepository: _productRepo,
+                      title: 'Just For You',
+                      onProductTap: (p) {},
                     ),
-                  );
-                },
-              ),
             ),
           ),
         ],
@@ -349,7 +354,19 @@ class _HomeScreenState extends State {
       builder: (context, snapshot) {
         // Loading State
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return SliverToBoxAdapter(child: _buildLoadingState());
+          // Sliver shimmer grid for categories
+          return SliverGrid(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => const ShimmerCategoryCard(),
+              childCount: 6,
+            ),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.9,
+            ),
+          );
         }
 
         // Error State
@@ -524,6 +541,76 @@ class _HomeScreenState extends State {
         backgroundColor: AppColors.successColor,
         behavior: SnackBarBehavior.floating,
       ),
+    );
+  }
+}
+
+class _TopProductsShimmer extends StatelessWidget {
+  const _TopProductsShimmer();
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        ShimmerSectionHeader(),
+        SizedBox(height: 8),
+        ShimmerAvatarRow(count: 8),
+      ],
+    );
+  }
+}
+
+class _NewItemsShimmer extends StatelessWidget {
+  const _NewItemsShimmer();
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        ShimmerSectionHeader(),
+        SizedBox(height: 8),
+        ShimmerHorizontalCards(count: 6),
+      ],
+    );
+  }
+}
+
+class _FlashSaleShimmer extends StatelessWidget {
+  const _FlashSaleShimmer();
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        ShimmerSectionHeader(),
+        SizedBox(height: 12),
+        ShimmerSquareGrid(count: 6, cross: 3),
+      ],
+    );
+  }
+}
+
+class _MostPopularShimmer extends StatelessWidget {
+  const _MostPopularShimmer();
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        ShimmerSectionHeader(),
+        SizedBox(height: 8),
+        ShimmerPopularRow(count: 8),
+      ],
+    );
+  }
+}
+
+class _JustForYouShimmer extends StatelessWidget {
+  const _JustForYouShimmer();
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        ShimmerSectionHeader(),
+        SizedBox(height: 8),
+        ShimmerJFYGrid(count: 4),
+      ],
     );
   }
 }

@@ -124,4 +124,27 @@ class ProductRepository {
     }
     return const [];
   }
+
+  /// Fetch "Just For You" products (personalized recommendations)
+  Future<List<Product>> fetchJustForYouProducts({int limit = 50}) async {
+    // For demo purposes, we'll get a variety of products
+    // In a real app, this would be based on user preferences, browsing history, etc.
+    final url = '${ApiEndpoints.limitedProductsUrl(limit)}';
+
+    final json = await _client.getJson(url);
+    final list = json['products'];
+
+    if (list is List) {
+      final products = list
+          .whereType<Map<String, dynamic>>()
+          .map(Product.fromJson)
+          .toList();
+
+      // Shuffle products to simulate personalized recommendations
+      products.shuffle();
+
+      return products.take(limit).toList(growable: false);
+    }
+    return const [];
+  }
 }

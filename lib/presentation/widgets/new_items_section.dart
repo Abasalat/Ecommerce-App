@@ -1,3 +1,4 @@
+import 'package:ecommerce_app/presentation/widgets/shimmer_skeletons.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/product_repository.dart';
@@ -44,8 +45,7 @@ class _NewItemsSectionState extends State<NewItemsSection> {
   @override
   void initState() {
     super.initState();
-    // You can create a fetchNewProducts method or use existing one
-    _productsFuture = widget.productRepository.fetchTopProducts(
+    _productsFuture = widget.productRepository.fetchNewProducts(
       limit: widget.productLimit,
     );
   }
@@ -56,7 +56,13 @@ class _NewItemsSectionState extends State<NewItemsSection> {
       future: _productsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildLoadingState();
+          return const Column(
+            children: [
+              ShimmerSectionHeader(),
+              SizedBox(height: 8),
+              ShimmerHorizontalCards(count: 6), // card-style row shimmer
+            ],
+          );
         }
 
         if (snapshot.hasError) {
@@ -298,13 +304,11 @@ class _NewItemsSectionState extends State<NewItemsSection> {
   }
 
   Widget _buildLoadingImage() {
-    return Container(
-      color: AppColors.inputFillColor,
-      child: Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: AppColors.primaryColor,
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) => ShimmerBox(
+        w: constraints.maxWidth,
+        h: constraints.maxHeight,
+        r: const BorderRadius.all(Radius.circular(12)),
       ),
     );
   }
@@ -322,34 +326,34 @@ class _NewItemsSectionState extends State<NewItemsSection> {
     );
   }
 
-  Widget _buildLoadingState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.title,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 280,
-            child: Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primaryColor,
-                strokeWidth: 2,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildLoadingState() {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 16),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Text(
+  //           widget.title,
+  //           style: TextStyle(
+  //             color: AppColors.textPrimary,
+  //             fontSize: 20,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 12),
+  //         SizedBox(
+  //           height: 280,
+  //           child: Center(
+  //             child: CircularProgressIndicator(
+  //               color: AppColors.primaryColor,
+  //               strokeWidth: 2,
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildErrorState() {
     return Padding(
