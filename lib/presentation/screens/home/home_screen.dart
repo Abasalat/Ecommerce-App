@@ -89,6 +89,7 @@ class _HomeScreenState extends State {
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: AppColors.surfaceColor,
+      automaticallyImplyLeading: false,
       elevation: 2,
       shadowColor: AppColors.lightShadow,
       title: Text(

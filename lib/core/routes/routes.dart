@@ -1,5 +1,9 @@
+import 'package:ecommerce_app/presentation/navigation/main_navigation.dart';
 import 'package:ecommerce_app/presentation/screens/auth/forgot_password_screen.dart';
+import 'package:ecommerce_app/presentation/screens/cart/cart_screen.dart';
+import 'package:ecommerce_app/presentation/screens/chatbot/chatbot_screen.dart';
 import 'package:ecommerce_app/presentation/screens/userprofile/profile_screen.dart';
+import 'package:ecommerce_app/presentation/screens/wishlist/wishlist_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:ecommerce_app/presentation/screens/auth/get_start_screen.dart';
 import 'package:ecommerce_app/presentation/screens/auth/login_screen.dart';
@@ -29,6 +33,18 @@ class Routes {
       case RoutesName.profileScreen:
         return _createRoute(const ProfileScreen());
 
+      // Add new routes for bottom navigation
+      case RoutesName.mainNavigation:
+        return _createRoute(const MainNavigation());
+
+      case RoutesName.wishlistScreen:
+        return _createRoute(const WishlistScreen());
+
+      case RoutesName.chatbotScreen:
+        return _createRoute(const ChatbotScreen());
+
+      case RoutesName.cartScreen:
+        return _createRoute(const CartScreen());
       default:
         return MaterialPageRoute(
           builder: (context) => const Scaffold(

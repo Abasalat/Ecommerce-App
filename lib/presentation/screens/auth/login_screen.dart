@@ -171,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Navigate to home screen
         Navigator.pushNamedAndRemoveUntil(
           context,
-          RoutesName.homeScreen,
+          RoutesName.mainNavigation,
           (route) => false,
         );
       }
