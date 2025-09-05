@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:ecommerce_app/presentation/widgets/shimmer_skeletons.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/product.dart';
@@ -73,8 +74,16 @@ class _FlashSaleSectionState extends State<FlashSaleSection> {
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildLoadingState();
+          return const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ShimmerSectionHeader(),
+              SizedBox(height: 12),
+              ShimmerSquareGrid(count: 6, cross: 3),
+            ],
+          );
         }
+
         if (snapshot.hasError) {
           print("Error fetching flash sale products: ${snapshot.error}");
           return _buildErrorState();
@@ -202,14 +211,14 @@ class _FlashSaleSectionState extends State<FlashSaleSection> {
     );
   }
 
-  Widget _buildLoadingState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 36),
-      child: Center(
-        child: CircularProgressIndicator(color: AppColors.primaryColor),
-      ),
-    );
-  }
+  // Widget _buildLoadingState() {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 36),
+  //     child: Center(
+  //       child: CircularProgressIndicator(color: AppColors.primaryColor),
+  //     ),
+  //   );
+  // }
 
   Widget _buildErrorState() {
     return Padding(
