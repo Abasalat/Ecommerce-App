@@ -166,7 +166,7 @@ class _JustForYouSectionState extends State<JustForYouSection> {
       child: Text(
         widget.title,
         style: TextStyle(
-          color: AppColors.textPrimary,
+          color: Theme.of(context).textTheme.displayLarge?.color,
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
@@ -200,9 +200,9 @@ class _JustForYouSectionState extends State<JustForYouSection> {
       onTap: () => widget.onProductTap?.call(product),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceColor,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderColor, width: 1),
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.shadowColor.withOpacity(0.1),
@@ -216,10 +216,11 @@ class _JustForYouSectionState extends State<JustForYouSection> {
           children: [
             // Product Image
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Container(
                 width: double.infinity,
                 margin: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.inputFillColor,
                   borderRadius: BorderRadius.circular(8),
@@ -246,7 +247,7 @@ class _JustForYouSectionState extends State<JustForYouSection> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).textTheme.displayLarge?.color,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         height: 1.2,

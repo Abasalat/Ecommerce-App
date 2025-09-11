@@ -15,10 +15,10 @@ class AppBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceColor,
+        color: Theme.of(context).appBarTheme.backgroundColor,
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowColor.withOpacity(0.1),
+            color: AppColors.lightShadow,
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
