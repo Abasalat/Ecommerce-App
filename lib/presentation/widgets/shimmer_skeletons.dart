@@ -6,20 +6,46 @@ class _C {
   static const hi = Color(0xFFF5F7F9);
 }
 
+// class ShimmerBox extends StatelessWidget {
+//   final double w, h;
+//   final BorderRadius? r;
+//   const ShimmerBox({super.key, required this.w, required this.h, this.r});
+//   @override
+//   Widget build(BuildContext context) {
+//     return Shimmer.fromColors(
+//       baseColor: _C.base,
+//       highlightColor: _C.hi,
+//       child: Container(
+//         width: w,
+//         height: h,
+//         decoration: BoxDecoration(
+//           color: _C.base,
+//           borderRadius: r ?? BorderRadius.circular(12),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 class ShimmerBox extends StatelessWidget {
   final double w, h;
   final BorderRadius? r;
   const ShimmerBox({super.key, required this.w, required this.h, this.r});
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final base = isDark ? const Color(0xFF242A2E) : const Color(0xFFE9EDF1);
+    final hi = isDark ? const Color(0xFF2E3438) : const Color(0xFFF5F7F9);
+
     return Shimmer.fromColors(
-      baseColor: _C.base,
-      highlightColor: _C.hi,
+      baseColor: base,
+      highlightColor: hi,
       child: Container(
         width: w,
         height: h,
         decoration: BoxDecoration(
-          color: _C.base,
+          color: base,
           borderRadius: r ?? BorderRadius.circular(12),
         ),
       ),

@@ -119,7 +119,7 @@ class _NewItemsSectionState extends State<NewItemsSection> {
           Text(
             widget.title,
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: Theme.of(context).textTheme.displayLarge?.color,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -185,9 +185,9 @@ class _NewItemsSectionState extends State<NewItemsSection> {
         width: 160,
         margin: EdgeInsets.only(right: index == totalitems - 1 ? 0 : 12),
         decoration: BoxDecoration(
-          color: AppColors.surfaceColor,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderColor, width: 1),
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.shadowColor.withOpacity(0.1),
@@ -233,7 +233,7 @@ class _NewItemsSectionState extends State<NewItemsSection> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).textTheme.displayLarge?.color,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -364,7 +364,7 @@ class _NewItemsSectionState extends State<NewItemsSection> {
           Text(
             widget.title,
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: Theme.of(context).textTheme.displayLarge?.color,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),

@@ -147,4 +147,19 @@ class ProductRepository {
     }
     return const [];
   }
+
+  Future<List<Product>> fetchAllProducts({int limit = 50}) async {
+    final url = '${ApiEndpoints.limitedProductsUrl(limit)}';
+
+    final json = await _client.getJson(url);
+    final list = json['products'];
+
+    if (list is List) {
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map(Product.fromJson)
+          .toList(growable: false);
+    }
+    return const [];
+  }
 }

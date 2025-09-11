@@ -1,6 +1,8 @@
+import 'package:ecommerce_app/core/providers/theme_provider.dart';
 import 'package:ecommerce_app/data/models/product.dart';
 import 'package:ecommerce_app/data/repositories/category_repository.dart';
 import 'package:ecommerce_app/data/repositories/product_repository.dart';
+import 'package:ecommerce_app/presentation/screens/category/category_products_screen.dart';
 import 'package:ecommerce_app/presentation/widgets/flash_sale_section.dart';
 import 'package:ecommerce_app/presentation/widgets/just_for_you_section.dart';
 import 'package:ecommerce_app/presentation/widgets/most_popular_section.dart';
@@ -8,6 +10,7 @@ import 'package:ecommerce_app/presentation/widgets/new_items_section.dart';
 import 'package:ecommerce_app/presentation/widgets/top_products_section.dart';
 import 'package:ecommerce_app/presentation/widgets/shimmer_skeletons.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../widgets/category_card.dart';
@@ -80,7 +83,7 @@ class _HomeScreenState extends State {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _buildAppBar(),
       body: _buildBody(),
     );
@@ -88,7 +91,9 @@ class _HomeScreenState extends State {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: AppColors.surfaceColor,
+      backgroundColor: Theme.of(
+        context,
+      ).appBarTheme.backgroundColor, // Theme-aware
       automaticallyImplyLeading: false,
       elevation: 2,
       shadowColor: AppColors.lightShadow,
@@ -101,6 +106,20 @@ class _HomeScreenState extends State {
         ),
       ),
       actions: [
+        Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            return IconButton(
+              icon: Icon(
+                themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                color: AppColors.primaryColor,
+                size: 26,
+              ),
+              onPressed: () {
+                themeProvider.toggleTheme();
+              },
+            );
+          },
+        ),
         IconButton(
           icon: Icon(Icons.search, color: AppColors.primaryColor, size: 26),
           onPressed: () {
@@ -307,6 +326,49 @@ class _HomeScreenState extends State {
     );
   }
 
+  // Widget _buildSectionHeader() {
+  //   return Row(
+  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //     children: [
+  //       Text(
+  //         'Categories',
+  //         style: TextStyle(
+  //           color: Theme.of(
+  //             context,
+  //           ).textTheme.displayLarge?.color, // Theme-aware
+  //           fontSize: 24,
+  //           fontWeight: FontWeight.bold,
+  //         ),
+  //       ),
+  //       Container(
+  //         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  //         decoration: BoxDecoration(
+  //           color: AppColors.accentColor.withOpacity(0.1),
+  //           borderRadius: BorderRadius.circular(20),
+  //           border: Border.all(
+  //             color: AppColors.accentColor.withOpacity(0.3),
+  //             width: 1,
+  //           ),
+  //         ),
+  //         child: Row(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Text(
+  //               'See All',
+  //               style: TextStyle(
+  //                 color: AppColors.accentColor,
+  //                 fontSize: 14,
+  //                 fontWeight: FontWeight.w600,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 4),
+  //             Icon(Icons.arrow_forward, color: AppColors.accentColor, size: 16),
+  //           ],
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
   Widget _buildSectionHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -314,35 +376,44 @@ class _HomeScreenState extends State {
         Text(
           'Categories',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: Theme.of(
+              context,
+            ).textTheme.displayLarge?.color, // Theme-aware
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.accentColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.accentColor.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'See All',
-                style: TextStyle(
-                  color: AppColors.accentColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+        GestureDetector(
+          onTap: _navigateToAllCategories, // Trigger the navigation here
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.accentColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.accentColor.withOpacity(0.3),
+                width: 1,
               ),
-              const SizedBox(width: 4),
-              Icon(Icons.arrow_forward, color: AppColors.accentColor, size: 16),
-            ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'See All',
+                  style: TextStyle(
+                    color: AppColors.accentColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.arrow_forward,
+                  color: AppColors.accentColor,
+                  size: 16,
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -388,36 +459,6 @@ class _HomeScreenState extends State {
     );
   }
 
-  Widget _buildLoadingState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: CircularProgressIndicator(
-              color: AppColors.primaryColor,
-              strokeWidth: 3,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Loading Categories...',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildErrorState(String error) {
     return Center(
       child: Container(
@@ -447,7 +488,12 @@ class _HomeScreenState extends State {
             const SizedBox(height: 8),
             Text(
               error,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              style: TextStyle(
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color, // Theme-aware
+                fontSize: 14,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -482,9 +528,11 @@ class _HomeScreenState extends State {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: AppColors.surfaceColor,
+          color: Theme.of(context).cardColor, // Theme-aware
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderColor),
+          border: Border.all(
+            color: Theme.of(context).dividerColor, // Theme-aware
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -492,13 +540,17 @@ class _HomeScreenState extends State {
             Icon(
               Icons.category_outlined,
               size: 64,
-              color: AppColors.textTertiary,
+              color: Theme.of(
+                context,
+              ).textTheme.bodySmall?.color, // Theme-aware
             ),
             const SizedBox(height: 16),
             Text(
               'No Categories Found',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: Theme.of(
+                  context,
+                ).textTheme.displayLarge?.color, // Theme-aware
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -506,7 +558,12 @@ class _HomeScreenState extends State {
             const SizedBox(height: 8),
             Text(
               'Please check your internet connection and try again',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              style: TextStyle(
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color, // Theme-aware
+                fontSize: 14,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -535,83 +592,25 @@ class _HomeScreenState extends State {
   }
 
   void _navigateToCategory(CategoryPreview category) {
-    // TODO: Navigate to category products screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening ${category.name} category'),
-        backgroundColor: AppColors.successColor,
-        behavior: SnackBarBehavior.floating,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CategoryProductsScreen(
+          selectedCategorySlug: category.slug,
+          selectedCategoryName: category.name,
+        ),
       ),
     );
   }
-}
 
-class _TopProductsShimmer extends StatelessWidget {
-  const _TopProductsShimmer();
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: const [
-        ShimmerSectionHeader(),
-        SizedBox(height: 8),
-        ShimmerAvatarRow(count: 8),
-      ],
-    );
-  }
-}
-
-class _NewItemsShimmer extends StatelessWidget {
-  const _NewItemsShimmer();
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: const [
-        ShimmerSectionHeader(),
-        SizedBox(height: 8),
-        ShimmerHorizontalCards(count: 6),
-      ],
-    );
-  }
-}
-
-class _FlashSaleShimmer extends StatelessWidget {
-  const _FlashSaleShimmer();
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: const [
-        ShimmerSectionHeader(),
-        SizedBox(height: 12),
-        ShimmerSquareGrid(count: 6, cross: 3),
-      ],
-    );
-  }
-}
-
-class _MostPopularShimmer extends StatelessWidget {
-  const _MostPopularShimmer();
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: const [
-        ShimmerSectionHeader(),
-        SizedBox(height: 8),
-        ShimmerPopularRow(count: 8),
-      ],
-    );
-  }
-}
-
-class _JustForYouShimmer extends StatelessWidget {
-  const _JustForYouShimmer();
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: const [
-        ShimmerSectionHeader(),
-        SizedBox(height: 8),
-        ShimmerJFYGrid(count: 4),
-      ],
+  void _navigateToAllCategories() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CategoryProductsScreen(
+          showAllCategories: true, // Show all categories
+        ),
+      ),
     );
   }
 }

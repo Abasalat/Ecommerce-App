@@ -120,7 +120,7 @@ class _FlashSaleSectionState extends State<FlashSaleSection> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).textTheme.displayLarge?.color,
               ),
             ),
             Container(

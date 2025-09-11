@@ -81,6 +81,41 @@ class AppColors {
   static const Color booksColor = Color(0xFF9C27B0); // Purple
   static const Color sportsColor = Color(0xFFFF9800); // Orange
 
+  // Dark Background Colors
+  static const Color darkBackgroundColor = Color(0xFF121212); // Very Dark Gray
+  static const Color darkSurfaceColor = Color(0xFF1E1E1E); // Dark Gray
+  static const Color darkCardColor = Color(0xFF252525); // Slightly Lighter Dark
+
+  // Dark Text Colors
+  static const Color darkTextPrimary = Color(0xFFE1E1E1); // Light Gray
+  static const Color darkTextSecondary = Color(0xFFB3B3B3); // Medium Gray
+  static const Color darkTextTertiary = Color(0xFF8A8A8A); // Darker Gray
+
+  // Dark Border Colors
+  static const Color darkBorderColor = Color(0xFF404040); // Dark Border
+  static const Color darkDividerColor = Color(0xFF303030); // Dark Divider
+
+  // Dark Input Colors
+  static const Color darkInputFillColor = Color(0xFF2A2A2A); // Dark Input
+  static const Color darkInputBorderColor = Color(
+    0xFF404040,
+  ); // Dark Input Border
+
+  // Dark Shadow Colors
+  static const Color darkShadowColor = Color(
+    0x40000000,
+  ); // Stronger shadow for dark theme
+  static const Color darkLightShadow = Color(
+    0x20000000,
+  ); // Light shadow for dark theme
+
+  // Dark Gradients
+  static const LinearGradient darkPrimaryGradient = LinearGradient(
+    colors: [Color(0xFF1B5E7F), Color(0xFF2E86AB)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   // Get color by name (utility method)
   static Color getColorByName(String colorName) {
     switch (colorName.toLowerCase()) {
@@ -164,6 +199,72 @@ class AppTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: const BorderSide(color: Colors.blue, width: 2),
+        ),
+      ),
+    );
+  }
+
+  // ADD THIS DARK THEME METHOD
+  static ThemeData get darkTheme {
+    return ThemeData(
+      brightness: Brightness.dark,
+      primarySwatch: MaterialColor(0xFF2E86AB, {
+        50: const Color(0xFF1a1a1a),
+        100: const Color(0xFF2d2d2d),
+        200: const Color(0xFF404040),
+        300: const Color(0xFF525252),
+        400: const Color(0xFF656565),
+        500: AppColors.primaryColor,
+        600: const Color(0xFF3498db),
+        700: const Color(0xFF2980b9),
+        800: const Color(0xFF1f618d),
+        900: const Color(0xFF154360),
+      }),
+      primaryColor: AppColors.primaryColor,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primaryColor,
+        secondary: AppColors.accentColor,
+        surface: AppColors.darkSurfaceColor,
+        background: AppColors.darkBackgroundColor,
+        onPrimary: AppColors.textWhite,
+        onSecondary: AppColors.textWhite,
+        onSurface: AppColors.darkTextPrimary,
+        onBackground: AppColors.darkTextPrimary,
+      ),
+      scaffoldBackgroundColor: AppColors.darkBackgroundColor,
+      cardColor: AppColors.darkCardColor,
+      dividerColor: AppColors.darkDividerColor,
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(color: AppColors.darkTextPrimary),
+        displayMedium: TextStyle(color: AppColors.darkTextPrimary),
+        bodyLarge: TextStyle(color: AppColors.darkTextPrimary),
+        bodyMedium: TextStyle(color: AppColors.darkTextSecondary),
+        bodySmall: TextStyle(color: AppColors.darkTextTertiary),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.darkSurfaceColor,
+        foregroundColor: AppColors.darkTextPrimary,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.buttonPrimary,
+          foregroundColor: AppColors.textWhite,
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        fillColor: AppColors.darkInputFillColor,
+        filled: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: AppColors.darkInputBorderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: AppColors.primaryColor, width: 2),
         ),
       ),
     );

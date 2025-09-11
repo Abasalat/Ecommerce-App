@@ -101,7 +101,7 @@ class _TopProductsSectionState extends State<TopProductsSection> {
           Text(
             widget.title,
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: Theme.of(context).textTheme.displayLarge?.color,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -151,7 +151,7 @@ class _TopProductsSectionState extends State<TopProductsSection> {
               child: Container(
                 width: 70, // inner circle size
                 height: 70,
-                color: AppColors.surfaceColor,
+                color: Theme.of(context).cardColor,
                 child:
                     (product.imageUrl != null && product.imageUrl!.isNotEmpty)
                     ? Image.network(
@@ -214,7 +214,7 @@ class _TopProductsSectionState extends State<TopProductsSection> {
           Text(
             widget.title,
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: Theme.of(context).textTheme.displayLarge?.color,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),

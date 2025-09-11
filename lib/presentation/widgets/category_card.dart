@@ -26,9 +26,9 @@ class CategoryCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceColor,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.borderColor, width: 1),
+          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.primaryColor.withOpacity(0.08),
@@ -65,9 +65,12 @@ class CategoryCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.surfaceColor,
+                color: Theme.of(context).cardColor,
                 border: Border(
-                  top: BorderSide(color: AppColors.borderColor, width: 0.5),
+                  top: BorderSide(
+                    color: Theme.of(context).dividerColor,
+                    width: 0.5,
+                  ),
                 ),
               ),
               child: Column(
@@ -78,7 +81,7 @@ class CategoryCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).textTheme.displayLarge?.color,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -87,7 +90,7 @@ class CategoryCard extends StatelessWidget {
                   Text(
                     '${imageUrls.length} items',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
