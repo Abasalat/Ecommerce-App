@@ -592,10 +592,9 @@ class _HomeScreenState extends State {
   }
 
   void _navigateToCategory(CategoryPreview category) {
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
-        builder: (context) => CategoryProductsScreen(
+        builder: (_) => CategoryProductsScreen(
           selectedCategorySlug: category.slug,
           selectedCategoryName: category.name,
         ),
@@ -604,8 +603,7 @@ class _HomeScreenState extends State {
   }
 
   void _navigateToAllCategories() {
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => CategoryProductsScreen(
           showAllCategories: true, // Show all categories
