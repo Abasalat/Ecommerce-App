@@ -1,3 +1,4 @@
+import 'package:ecommerce_app/presentation/screens/product/product_detail_screen.dart';
 import 'package:ecommerce_app/presentation/widgets/products_section_widget.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
@@ -143,9 +144,28 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
               if (filter == 'All') {
                 return await _productRepo.fetchAllProducts(limit: 50);
               } else {
-                final slug =
-                    widget.selectedCategorySlug ??
-                    _allCategories.firstWhere((cat) => cat.name == filter).slug;
+                String? slug;
+
+                // Priority 1: use selectedCategorySlug from Home navigation
+                if (widget.selectedCategorySlug != null &&
+                    widget.selectedCategoryName?.toLowerCase() ==
+                        filter.toLowerCase()) {
+                  slug = widget.selectedCategorySlug;
+                }
+                // Priority 2: find slug from loaded categories (for filters inside the screen)
+                else if (_allCategories.isNotEmpty) {
+                  final category = _allCategories.firstWhere(
+                    (cat) => cat.name.toLowerCase() == filter.toLowerCase(),
+                    orElse: () => _allCategories.first,
+                  );
+                  slug = category.slug;
+                }
+
+                // If slug is still null, fallback
+                if (slug == null) {
+                  return [];
+                }
+
                 return await _productRepo.fetchProductsByCategory(
                   slug,
                   limit: 50,
@@ -157,17 +177,18 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
             onProductTap: _onProductTap,
           ),
         ),
+
+        const SizedBox(height: 24),
       ],
     );
   }
 
   void _onProductTap(Product product) {
     // TODO: Navigate to product details screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Product: ${product.title}'),
-        backgroundColor: AppColors.successColor,
-        behavior: SnackBarBehavior.floating,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProductDetailScreen(product: product),
       ),
     );
   }
