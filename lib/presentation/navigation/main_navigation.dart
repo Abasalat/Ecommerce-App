@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'package:ecommerce_app/core/constants/app_colors.dart';
 import 'package:ecommerce_app/presentation/widgets/app_bottom_nav.dart';
 import 'package:ecommerce_app/presentation/screens/home/home_screen.dart';
@@ -6,6 +8,9 @@ import 'package:ecommerce_app/presentation/screens/wishlist/wishlist_screen.dart
 import 'package:ecommerce_app/presentation/screens/chatbot/chatbot_screen.dart';
 import 'package:ecommerce_app/presentation/screens/cart/cart_screen.dart';
 import 'package:ecommerce_app/presentation/screens/userprofile/profile_screen.dart';
+
+// <- Make sure you created this provider and registered it in main.dart
+import 'package:ecommerce_app/core/providers/nav_provider.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -15,28 +20,28 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _index = 0;
-
   // One navigator per tab to keep its own back stack
   final _navigatorKeys = List.generate(5, (_) => GlobalKey<NavigatorState>());
 
   void _selectTab(int i) {
-    if (_index == i) {
-      // re-tap: pop that tab to root
+    final nav = context.read<NavProvider>();
+    if (nav.index == i) {
+      // re-tap: pop that tab to its root
       _navigatorKeys[i].currentState?.popUntil((r) => r.isFirst);
     } else {
-      setState(() => _index = i);
+      nav.setIndex(i);
     }
   }
 
   Future<bool> _onWillPop() async {
-    final currentNav = _navigatorKeys[_index].currentState!;
+    final nav = context.read<NavProvider>();
+    final currentNav = _navigatorKeys[nav.index].currentState!;
     if (currentNav.canPop()) {
       currentNav.pop();
       return false;
     }
-    if (_index != 0) {
-      setState(() => _index = 0);
+    if (nav.index != 0) {
+      context.read<NavProvider>().setIndex(0);
       return false;
     }
     return true; // allow app to exit
@@ -44,11 +49,13 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    final nav = context.watch<NavProvider>(); // listen to tab index changes
+
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
         body: IndexedStack(
-          index: _index,
+          index: nav.index,
           children: [
             _TabNavigator(
               navigatorKey: _navigatorKeys[0],
@@ -73,7 +80,7 @@ class _MainNavigationState extends State<MainNavigation> {
           ],
         ),
         bottomNavigationBar: AppBottomNav(
-          currentIndex: _index,
+          currentIndex: nav.index,
           onTap: _selectTab,
         ),
         backgroundColor: AppColors.backgroundColor,
