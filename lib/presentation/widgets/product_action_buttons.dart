@@ -1,82 +1,128 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../core/constants/app_colors.dart';
 
 class ProductActionButtons extends StatelessWidget {
-  final VoidCallback onAddToCart;
-  final VoidCallback onBuyNow;
-  final VoidCallback onWishlistTap;
-  final bool isFavorite;
-
   const ProductActionButtons({
     super.key,
-    required this.onAddToCart,
-    required this.onBuyNow,
     required this.onWishlistTap,
-    this.isFavorite = false,
+    required this.isFavorite,
+    this.onAddToCart,
+    this.onBuyNow,
+    this.isInCart = false,
+    this.quantityInCart = 0,
+    this.isLoading = false,
   });
+
+  final VoidCallback? onAddToCart;
+  final VoidCallback? onBuyNow;
+  final VoidCallback onWishlistTap;
+
+  final bool isFavorite;
+  final bool isInCart;
+  final int quantityInCart;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: AppColors.surfaceColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.shadowColor,
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Wishlist / Favorite Icon
-          InkWell(
-            onTap: onWishlistTap,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.all(12),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            // Wishlist button
+            Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).dividerColor.withOpacity(0.1),
+                color: AppColors.backgroundColor,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.lightShadow),
               ),
-              child: Icon(
-                isFavorite ? Icons.favorite : Icons.favorite_outline,
-                color: isFavorite
-                    ? AppColors.errorColor
-                    : Theme.of(context).iconTheme.color,
+              child: IconButton(
+                onPressed: isLoading ? null : onWishlistTap,
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite
+                      ? AppColors.errorColor
+                      : AppColors.textSecondary,
+                ),
+                tooltip: isFavorite
+                    ? 'Remove from wishlist'
+                    : 'Add to wishlist',
               ),
             ),
-          ),
+            const SizedBox(width: 12),
 
-          const SizedBox(width: 12),
-
-          // Add to Cart Button
-          Expanded(
-            child: ElevatedButton(
-              onPressed: onAddToCart,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+            // Add to Cart
+            Expanded(
+              child: SizedBox(
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: (onAddToCart == null || isLoading)
+                      ? null
+                      : onAddToCart,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.shopping_cart),
+                  label: Text(
+                    isInCart && quantityInCart > 0
+                        ? 'Update Cart'
+                        : 'Add to Cart',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                ),
               ),
-              child: const Text('Add to Cart'),
             ),
-          ),
+            const SizedBox(width: 12),
 
-          const SizedBox(width: 12),
-
-          // Buy Now Button
-          Expanded(
-            child: ElevatedButton(
-              onPressed: onBuyNow,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: AppColors.primaryColor,
+            // Buy Now
+            Expanded(
+              child: SizedBox(
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: (onBuyNow == null || isLoading) ? null : onBuyNow,
+                  icon: const Icon(Icons.flash_on),
+                  label: const Text(
+                    'Buy Now',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accentColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                ),
               ),
-              child: const Text('Buy Now'),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
