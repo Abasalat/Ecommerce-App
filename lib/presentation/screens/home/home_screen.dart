@@ -42,10 +42,15 @@ class _HomeScreenState extends State {
   void initState() {
     super.initState();
     // Create repositories
-    final apiClient = const ApiClient();
-    _categoryRepo = CategoryRepository(apiClient);
-    _productRepo = ProductRepository(apiClient);
+    //final apiClient = const ApiClient();
+    //_categoryRepo = CategoryRepository(apiClient);
+    //_productRepo = ProductRepository(apiClient);
 
+    // If you kept CategoryRepository local, keep this line:
+    final apiClient = context.read<ApiClient>(); // reuse global client
+    _categoryRepo = CategoryRepository(apiClient);
+
+    _productRepo = context.read<ProductRepository>();
     // Start data fetching
     _categoriesFuture = _categoryRepo.fetchTopCategoriesWithPreviews(
       categoryLimit: 6,
