@@ -1,4 +1,5 @@
 import 'package:ecommerce_app/core/providers/cart_provider.dart';
+import 'package:ecommerce_app/core/providers/wishlist_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
@@ -210,14 +211,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               bottom: 0,
               left: 0,
               right: 0,
-              child: Consumer<CartProvider>(
-                builder: (context, cartProvider, child) {
-                  final isInCart = cartProvider.isProductInCart(
-                    widget.product.id ?? 0,
-                  );
-                  final quantityInCart = cartProvider.getProductQuantity(
-                    widget.product.id ?? 0,
-                  );
+              child: Consumer2<CartProvider, WishlistProvider>(
+                builder: (context, cart, wish, child) {
+                  final productId = widget.product.id ?? 0;
+
+                  final isInCart = cart.isProductInCart(productId);
+                  final quantityInCart = cart.getProductQuantity(productId);
+                  final isFav = wish.isInWishlist(productId);
 
                   return ProductActionButtons(
                     onAddToCart: (widget.product.stock ?? 0) > 0
@@ -226,12 +226,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     onBuyNow: (widget.product.stock ?? 0) > 0
                         ? () => _openBottomSheet(action: 'buy')
                         : null,
-                    onWishlistTap: () {
-                      setState(() {
-                        _isFavorite = !_isFavorite;
-                      });
+
+                    //  Wishlist toggle now goes through the provider (persists in Firestore)
+                    onWishlistTap: () async {
+                      await context.read<WishlistProvider>().toggle(
+                        widget.product,
+                      );
                     },
-                    isFavorite: _isFavorite,
+
+                    // UI state comes from providers
+                    isFavorite: isFav,
                     isInCart: isInCart,
                     quantityInCart: quantityInCart,
                     isLoading: _isLoading,
