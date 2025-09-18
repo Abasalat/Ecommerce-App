@@ -1,5 +1,7 @@
+import 'package:ecommerce_app/core/providers/nav_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/routes_name.dart';
@@ -17,6 +19,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
   Map<String, dynamic>? userData;
   bool isLoading = true;
+  bool _isSigningOut = false;
 
   @override
   void initState() {
@@ -105,9 +108,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           // Sign Out Button
           CustomButton(
-            text: 'Sign Out',
-            onPressed: _handleSignOut,
+            text: _isSigningOut ? 'Signing Out...' : 'Sign Out',
+            onPressed: _isSigningOut ? null : _handleSignOut,
             backgroundColor: AppColors.errorColor,
+            isLoading: _isSigningOut,
           ),
         ],
       ),
@@ -172,19 +176,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _handleSignOut() async {
+    final shouldSignOut = await _showSignOutDialog();
+    if (!shouldSignOut) return;
+
+    setState(() => _isSigningOut = true);
+
     try {
       await _authService.signOut();
 
-      if (mounted) {
-        // Navigate back to GetStarted screen
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          RoutesName.getStartedScreen,
-          (route) => false,
-        );
-      }
+      if (!mounted) return;
+
+      // (optional) also reset your selected bottom tab to Home if you use a NavProvider
+      context.read<NavProvider>().setIndex(0);
+
+      // IMPORTANT: use the ROOT navigator so we exit the tab's inner navigator
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamedAndRemoveUntil(RoutesName.getStartedScreen, (route) => false);
     } catch (e) {
-      _showError('Failed to sign out');
+      if (mounted) {
+        _showError('Failed to sign out: $e');
+      }
+    } finally {
+      if (mounted) {
+        // If navigation happened, this widget is disposed and this won’t run;
+        // if it didn’t, this ensures the spinner stops.
+        setState(() => _isSigningOut = false);
+      }
     }
   }
 
@@ -196,5 +215,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  Future<bool> _showSignOutDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Sign Out'),
+            content: Text('Are you sure you want to sign out?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text('Sign Out'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.errorColor,
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 }

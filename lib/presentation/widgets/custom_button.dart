@@ -4,7 +4,7 @@ import 'package:flutter/material.dart'; // Import your colors
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isLoading;
   final Color? backgroundColor;
   final Color? textColor;
