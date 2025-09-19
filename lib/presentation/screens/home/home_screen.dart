@@ -3,6 +3,7 @@ import 'package:ecommerce_app/data/models/product.dart';
 import 'package:ecommerce_app/data/repositories/category_repository.dart';
 import 'package:ecommerce_app/data/repositories/product_repository.dart';
 import 'package:ecommerce_app/presentation/screens/category/category_products_screen.dart';
+import 'package:ecommerce_app/presentation/screens/product/product_detail_screen.dart';
 import 'package:ecommerce_app/presentation/widgets/flash_sale_section.dart';
 import 'package:ecommerce_app/presentation/widgets/just_for_you_section.dart';
 import 'package:ecommerce_app/presentation/widgets/most_popular_section.dart';
@@ -199,17 +200,40 @@ class _HomeScreenState extends State {
           ),
 
           // ---- Top Products ----
+          // SliverToBoxAdapter(
+          //   child: Padding(
+          //     padding: const EdgeInsets.symmetric(vertical: 20),
+          //     child: !_firstSectionLoaded || !_topReady
+          //         ? const SizedBox.shrink() // was: _TopProductsShimmer()
+          //         : TopProductsSection(
+          //             productRepository: _productRepo,
+          //             title: 'Top Products',
+          //             productLimit: 8,
+          //             onSeeAllTap: () {},
+          //             onProductTap: (p) {},
+          //           ),
+          //   ),
+          // ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: !_firstSectionLoaded || !_topReady
-                  ? const SizedBox.shrink() // was: _TopProductsShimmer()
+                  ? const SizedBox.shrink()
                   : TopProductsSection(
                       productRepository: _productRepo,
                       title: 'Top Products',
                       productLimit: 8,
                       onSeeAllTap: () {},
-                      onProductTap: (p) {},
+                      onProductTap: (product) {
+                        // Navigate to ProductDetailScreen and pass the selected product
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ProductDetailScreen(product: product),
+                          ),
+                        );
+                      },
                     ),
             ),
           ),
@@ -331,49 +355,6 @@ class _HomeScreenState extends State {
     );
   }
 
-  // Widget _buildSectionHeader() {
-  //   return Row(
-  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //     children: [
-  //       Text(
-  //         'Categories',
-  //         style: TextStyle(
-  //           color: Theme.of(
-  //             context,
-  //           ).textTheme.displayLarge?.color, // Theme-aware
-  //           fontSize: 24,
-  //           fontWeight: FontWeight.bold,
-  //         ),
-  //       ),
-  //       Container(
-  //         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-  //         decoration: BoxDecoration(
-  //           color: AppColors.accentColor.withOpacity(0.1),
-  //           borderRadius: BorderRadius.circular(20),
-  //           border: Border.all(
-  //             color: AppColors.accentColor.withOpacity(0.3),
-  //             width: 1,
-  //           ),
-  //         ),
-  //         child: Row(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             Text(
-  //               'See All',
-  //               style: TextStyle(
-  //                 color: AppColors.accentColor,
-  //                 fontSize: 14,
-  //                 fontWeight: FontWeight.w600,
-  //               ),
-  //             ),
-  //             const SizedBox(width: 4),
-  //             Icon(Icons.arrow_forward, color: AppColors.accentColor, size: 16),
-  //           ],
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
   Widget _buildSectionHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
