@@ -1,3 +1,4 @@
+import 'package:ecommerce_app/presentation/screens/product/product_detail_screen.dart';
 import 'package:ecommerce_app/presentation/widgets/shimmer_skeletons.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
@@ -16,8 +17,8 @@ class TopProductsSection extends StatefulWidget {
   final ProductRepository productRepository;
   final String title;
   final int productLimit;
-  final VoidCallback? onSeeAllTap; // No longer used but kept for compatibility
-  final Function(ProductItem)? onProductTap;
+  final VoidCallback? onSeeAllTap;
+  final Function(Product)? onProductTap; // Pass the full Product object
   const TopProductsSection({
     super.key,
     required this.productRepository,
@@ -51,7 +52,7 @@ class _TopProductsSectionState extends State<TopProductsSection> {
             children: const [
               SizedBox(height: 10),
               ShimmerSectionHeader(),
-              ShimmerAvatarRow(count: 8), // round avatars row
+              ShimmerAvatarRow(count: 8),
             ],
           );
         }
@@ -59,34 +60,22 @@ class _TopProductsSectionState extends State<TopProductsSection> {
         if (snapshot.hasError) {
           return _buildErrorState();
         }
+
         final products = snapshot.data ?? [];
         if (products.isEmpty) {
-          return const SizedBox.shrink(); // Hide if no products
+          return const SizedBox.shrink();
         }
-        // Convert Product to ProductItem
-        final productItems = products
-            .map(
-              (product) => ProductItem(
-                id: product.id.toString(),
-                name: product.title ?? 'Unknown Product',
-                imageUrl: product.images.isNotEmpty
-                    ? product.images.first
-                    : product.thumbnail,
-              ),
-            )
-            .toList();
-        return _buildProductsSection(productItems);
+
+        return _buildProductsSection(products); // Pass full Product
       },
     );
   }
 
-  Widget _buildProductsSection(List<ProductItem> products) {
+  Widget _buildProductsSection(List<Product> products) {
     return Column(
       children: [
-        // Section Header without "See All"
         SizedBox(height: 10),
         _buildSectionHeader(),
-        // Products List
         SizedBox(height: 125, child: _buildProductsList(products)),
       ],
     );
@@ -96,7 +85,7 @@ class _TopProductsSectionState extends State<TopProductsSection> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start, // Align title to start
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text(
             widget.title,
@@ -106,13 +95,12 @@ class _TopProductsSectionState extends State<TopProductsSection> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          // "See All" removed as per request
         ],
       ),
     );
   }
 
-  Widget _buildProductsList(List<ProductItem> products) {
+  Widget _buildProductsList(List<Product> products) {
     return ListView.builder(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -124,16 +112,18 @@ class _TopProductsSectionState extends State<TopProductsSection> {
     );
   }
 
-  Widget _buildProductItem(ProductItem product, int index, int totalItems) {
+  Widget _buildProductItem(Product product, int index, int totalItems) {
     return GestureDetector(
       onTap: () {
-        // Add navigation route here to navigate to product details screen
-        // For example:
-        // Navigator.pushNamed(context, '/productDetails', arguments: product);
-        widget.onProductTap?.call(product);
+        // Navigate to ProductDetailScreen using rootNavigator to hide the bottom navigation bar
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(product: product),
+          ),
+        );
       },
       child: Container(
-        width: 80, // controls overall size
+        width: 80,
         margin: EdgeInsets.only(right: index == totalItems - 1 ? 0 : 12),
         child: Center(
           child: Container(
@@ -149,14 +139,13 @@ class _TopProductsSectionState extends State<TopProductsSection> {
             ),
             child: ClipOval(
               child: Container(
-                width: 70, // inner circle size
+                width: 70,
                 height: 70,
                 color: Theme.of(context).cardColor,
-                child:
-                    (product.imageUrl != null && product.imageUrl!.isNotEmpty)
+                child: (product.images.isNotEmpty)
                     ? Image.network(
-                        product.imageUrl!,
-                        fit: BoxFit.cover, // ensures image fills the circle
+                        product.images.first,
+                        fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.inventory_2_outlined,
                           color: AppColors.textTertiary,
@@ -175,35 +164,6 @@ class _TopProductsSectionState extends State<TopProductsSection> {
       ),
     );
   }
-
-  // Widget _buildLoadingState() {
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(horizontal: 16),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Text(
-  //           widget.title,
-  //           style: TextStyle(
-  //             color: AppColors.textPrimary,
-  //             fontSize: 20,
-  //             fontWeight: FontWeight.bold,
-  //           ),
-  //         ),
-  //         const SizedBox(height: 12),
-  //         SizedBox(
-  //           height: 120,
-  //           child: Center(
-  //             child: CircularProgressIndicator(
-  //               color: AppColors.primaryColor,
-  //               strokeWidth: 2,
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildErrorState() {
     return Padding(
