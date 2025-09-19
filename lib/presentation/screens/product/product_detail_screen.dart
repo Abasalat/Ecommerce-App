@@ -9,6 +9,7 @@ import '../../widgets/product_price_section.dart';
 import '../../widgets/product_info_section.dart';
 import '../../widgets/product_reviews_section.dart';
 import '../../widgets/product_action_buttons.dart';
+import '../../../core/utils/text_utils.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final dynamic product; // Using dynamic to match your Product model
@@ -102,14 +103,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         (BuildContext context, BoxConstraints constraints) {
                           var top = constraints.biggest.height;
                           return FlexibleSpaceBar(
+                            centerTitle: true,
+                            titlePadding: const EdgeInsets.symmetric(
+                              horizontal: 48.0,
+                              vertical: 16.0,
+                            ),
                             title: AnimatedOpacity(
                               duration: const Duration(milliseconds: 200),
                               opacity: top <= kToolbarHeight + 50 ? 1.0 : 0.0,
-                              child: Text(
-                                widget.product.title ?? '',
-                                style: const TextStyle(
-                                  color: AppColors.primaryColor,
-                                  fontWeight: FontWeight.bold,
+                              child: Container(
+                                width: MediaQuery.of(context).size.width - 120,
+                                child: Text(
+                                  TextUtils.truncateWords(
+                                    widget.product.title ?? '',
+                                    maxWords: 2,
+                                    ellipsis: '...',
+                                    alwaysEllipsis: true,
+                                  ),
+                                  style: const TextStyle(
+                                    color: AppColors.primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ),
