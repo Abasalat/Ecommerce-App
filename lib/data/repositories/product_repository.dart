@@ -49,7 +49,7 @@ class ProductRepository {
   }
 
   /// Fetch new products (recently added products - you can modify logic as needed)
-  Future<List<Product>> fetchNewProducts({int limit = 10}) async {
+  Future<List<Product>> fetchNewProducts({int limit = 10, required int page}) async {
     // For demo purposes, we'll get products and sort by ID (assuming higher ID = newer)
     // In a real app, you might have a 'createdAt' field or a separate endpoint
     final url = '${ApiEndpoints.limitedProductsUrl(50)}';
