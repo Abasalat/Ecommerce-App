@@ -26,6 +26,9 @@ class NewItemsSection extends StatefulWidget {
   final VoidCallback? onSeeAllTap;
   final Function(NewProductItem)? onProductTap;
 
+  // NEW: full product callback (optional)
+  final Function(Product)? onProductTapFull;
+
   const NewItemsSection({
     super.key,
     required this.productRepository,
@@ -33,6 +36,7 @@ class NewItemsSection extends StatefulWidget {
     this.productLimit = 8,
     this.onSeeAllTap,
     this.onProductTap,
+    this.onProductTapFull, // NEW
   });
 
   @override
@@ -42,11 +46,15 @@ class NewItemsSection extends StatefulWidget {
 class _NewItemsSectionState extends State<NewItemsSection> {
   late Future<List<Product>> _productsFuture;
 
+  // NEW: keep originals to pass full Product on tap
+  List<Product> _originalProducts = const [];
+
   @override
   void initState() {
     super.initState();
     _productsFuture = widget.productRepository.fetchNewProducts(
       limit: widget.productLimit,
+      page: 1,
     );
   }
 
@@ -60,7 +68,7 @@ class _NewItemsSectionState extends State<NewItemsSection> {
             children: [
               ShimmerSectionHeader(),
               SizedBox(height: 8),
-              ShimmerHorizontalCards(count: 6), // card-style row shimmer
+              ShimmerHorizontalCards(count: 6),
             ],
           );
         }
@@ -70,20 +78,17 @@ class _NewItemsSectionState extends State<NewItemsSection> {
         }
 
         final products = snapshot.data ?? [];
-        if (products.isEmpty) {
-          return const SizedBox.shrink();
-        }
+        if (products.isEmpty) return const SizedBox.shrink();
 
-        // Convert Product to NewProductItem
+        _originalProducts = products; // ⬅️ keep originals
+
         final newProductItems = products
             .map(
-              (product) => NewProductItem(
-                id: product.id.toString(),
-                name: product.title ?? 'Unknown Product',
-                price: product.price ?? 0.0,
-                imageUrl: product.images.isNotEmpty
-                    ? product.images.first
-                    : product.thumbnail,
+              (p) => NewProductItem(
+                id: p.id.toString(),
+                name: p.title ?? 'Unknown Product',
+                price: p.price ?? 0.0,
+                imageUrl: p.images.isNotEmpty ? p.images.first : p.thumbnail,
               ),
             )
             .toList();
@@ -180,7 +185,15 @@ class _NewItemsSectionState extends State<NewItemsSection> {
 
   Widget _buildProductCard(NewProductItem product, int index, int totalitems) {
     return GestureDetector(
-      onTap: () => widget.onProductTap?.call(product),
+      onTap: () {
+        // Prefer full product if handler provided
+        if (widget.onProductTapFull != null) {
+          final full = _originalProducts[index];
+          widget.onProductTapFull!(full);
+        } else {
+          widget.onProductTap?.call(product);
+        }
+      },
       child: Container(
         width: 160,
         margin: EdgeInsets.only(right: index == totalitems - 1 ? 0 : 12),
