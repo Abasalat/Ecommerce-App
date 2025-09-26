@@ -3,6 +3,7 @@ import 'package:ecommerce_app/data/models/product.dart';
 import 'package:ecommerce_app/data/repositories/category_repository.dart';
 import 'package:ecommerce_app/data/repositories/product_repository.dart';
 import 'package:ecommerce_app/presentation/screens/category/category_products_screen.dart';
+import 'package:ecommerce_app/presentation/screens/mostPopular/most_popular_products_screen.dart';
 import 'package:ecommerce_app/presentation/screens/newitem/new_items_products_screen.dart';
 import 'package:ecommerce_app/presentation/screens/product/product_detail_screen.dart';
 import 'package:ecommerce_app/presentation/widgets/flash_sale_section.dart';
@@ -224,22 +225,6 @@ class _HomeScreenState extends State {
             ),
           ),
 
-          // ---- New Items ----
-          // SliverToBoxAdapter(
-          //   child: Padding(
-          //     padding: const EdgeInsets.only(bottom: 20),
-          //     child: !_firstSectionLoaded || !_newReady
-          //         ? const SizedBox.shrink() // was: _NewItemsShimmer()
-          //         : NewItemsSection(
-          //             productRepository: _productRepo,
-          //             title: 'New Items',
-          //             productLimit: 8,
-          //             onSeeAllTap: () {},
-          //             onProductTap: (p) {},
-          //           ),
-          //   ),
-          // ),
-          // In _buildBody() where you create NewItemsSection:
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 20),
@@ -290,8 +275,30 @@ class _HomeScreenState extends State {
                       productRepository: _productRepo,
                       title: 'Most Popular',
                       productLimit: 8,
-                      onSeeAllTap: () {},
-                      onProductTap: (p) {},
+                      onSeeAllTap: () {
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(
+                            builder: (_) => MostPopularProductsScreen(),
+                          ),
+                        );
+                      },
+                      // onProductTap: (product) {
+                      //   // Find the original product from your data
+
+                      //   Navigator.of(context, rootNavigator: true).push(
+                      //     MaterialPageRoute(
+                      //       builder: (context) =>
+                      //           ProductDetailScreen(product: product),
+                      //     ),
+                      //   );
+                      // },
+                      onProductTapFull: (Product p) {
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(
+                            builder: (_) => ProductDetailScreen(product: p),
+                          ),
+                        );
+                      },
                     ),
             ),
           ),
