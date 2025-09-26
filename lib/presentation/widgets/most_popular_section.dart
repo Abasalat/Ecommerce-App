@@ -27,6 +27,8 @@ class MostPopularSection extends StatefulWidget {
   final int productLimit;
   final VoidCallback? onSeeAllTap;
   final Function(PopularProductItem)? onProductTap;
+  // NEW: full product callback (optional)
+  final Function(Product)? onProductTapFull;
 
   const MostPopularSection({
     super.key,
@@ -35,6 +37,7 @@ class MostPopularSection extends StatefulWidget {
     this.productLimit = 8,
     this.onSeeAllTap,
     this.onProductTap,
+    this.onProductTapFull,
   });
 
   @override
@@ -43,6 +46,7 @@ class MostPopularSection extends StatefulWidget {
 
 class _MostPopularSectionState extends State<MostPopularSection> {
   late Future<List<Product>> _productsFuture;
+  List<Product> _originalProducts = const [];
 
   @override
   void initState() {
@@ -75,7 +79,7 @@ class _MostPopularSectionState extends State<MostPopularSection> {
         if (products.isEmpty) {
           return const SizedBox.shrink();
         }
-
+        _originalProducts = products;
         // Convert Product to PopularProductItem
         final popularItems = products
             .map(
@@ -218,7 +222,15 @@ class _MostPopularSectionState extends State<MostPopularSection> {
     int totalitems,
   ) {
     return GestureDetector(
-      onTap: () => widget.onProductTap?.call(product),
+      onTap: () {
+        // Prefer full product if handler provided
+        if (widget.onProductTapFull != null) {
+          final full = _originalProducts[index];
+          widget.onProductTapFull!(full);
+        } else {
+          widget.onProductTap?.call(product);
+        }
+      },
       child: Container(
         width: 140,
         margin: EdgeInsets.only(right: index == totalitems - 1 ? 0 : 12),
