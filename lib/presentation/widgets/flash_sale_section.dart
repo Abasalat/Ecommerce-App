@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:ecommerce_app/presentation/screens/product/product_detail_screen.dart';
+import 'package:ecommerce_app/presentation/screens/sale/sale_nested_screen.dart';
 import 'package:ecommerce_app/presentation/widgets/shimmer_skeletons.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
@@ -19,8 +21,8 @@ class _FlashSaleSectionState extends State<FlashSaleSection> {
   late Future<List<Product>> _flashSaleProductsFuture;
 
   static const int flashSaleDurationSeconds = 3600; // 1 hour countdown
-  late Timer _timer;
-  int _secondsLeft = flashSaleDurationSeconds;
+  //late Timer _timer;
+  //int _secondsLeft = flashSaleDurationSeconds;
 
   @override
   void initState() {
@@ -28,41 +30,41 @@ class _FlashSaleSectionState extends State<FlashSaleSection> {
     _flashSaleProductsFuture = widget.productRepository.fetchSaleProducts(
       limit: 6,
     );
-    _startTimer();
+    // _startTimer();
   }
 
-  void _startTimer() {
-    _secondsLeft = flashSaleDurationSeconds;
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_secondsLeft == 0) {
-        timer.cancel();
-      } else {
-        setState(() {
-          _secondsLeft--;
-        });
-      }
-    });
-  }
+  // void _startTimer() {
+  //   _secondsLeft = flashSaleDurationSeconds;
+  //   _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+  //     if (_secondsLeft == 0) {
+  //       timer.cancel();
+  //     } else {
+  //       setState(() {
+  //         _secondsLeft--;
+  //       });
+  //     }
+  //   });
+  // }
 
   @override
   void dispose() {
-    _timer.cancel();
+    //  _timer.cancel();
     super.dispose();
   }
 
-  String _formattedTime(int totalSeconds) {
-    final duration = Duration(seconds: totalSeconds);
-    final hoursStr = duration.inHours.toString().padLeft(2, '0');
-    final minutesStr = duration.inMinutes
-        .remainder(60)
-        .toString()
-        .padLeft(2, '0');
-    final secondsStr = duration.inSeconds
-        .remainder(60)
-        .toString()
-        .padLeft(2, '0');
-    return '$hoursStr:$minutesStr:$secondsStr';
-  }
+  // String _formattedTime(int totalSeconds) {
+  //   final duration = Duration(seconds: totalSeconds);
+  //   final hoursStr = duration.inHours.toString().padLeft(2, '0');
+  //   final minutesStr = duration.inMinutes
+  //       .remainder(60)
+  //       .toString()
+  //       .padLeft(2, '0');
+  //   final secondsStr = duration.inSeconds
+  //       .remainder(60)
+  //       .toString()
+  //       .padLeft(2, '0');
+  //   return '$hoursStr:$minutesStr:$secondsStr';
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -108,9 +110,14 @@ class _FlashSaleSectionState extends State<FlashSaleSection> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
+        // In your FlashSaleSection header's onTap:
         onTap: () {
-          // Navigate to full flash sale listing screen
-          // Example: Navigator.pushNamed(context, '/flashSaleListing');
+          Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  SaleNestedScreen(productRepository: widget.productRepository),
+            ),
+          );
         },
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -130,7 +137,8 @@ class _FlashSaleSectionState extends State<FlashSaleSection> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                _formattedTime(_secondsLeft),
+                //_formattedTime(_secondsLeft),
+                'See All',
                 style: TextStyle(
                   color: AppColors.textWhite,
                   fontWeight: FontWeight.bold,
@@ -167,6 +175,11 @@ class _FlashSaleSectionState extends State<FlashSaleSection> {
             onTap: () {
               // Navigate to product detail screen passing product data
               // Example: Navigator.pushNamed(context, '/productDetails', arguments: product);
+              Navigator.of(context, rootNavigator: true).push(
+                MaterialPageRoute(
+                  builder: (_) => ProductDetailScreen(product: product),
+                ),
+              );
             },
             child: Stack(
               children: [
@@ -210,15 +223,6 @@ class _FlashSaleSectionState extends State<FlashSaleSection> {
       ),
     );
   }
-
-  // Widget _buildLoadingState() {
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(vertical: 36),
-  //     child: Center(
-  //       child: CircularProgressIndicator(color: AppColors.primaryColor),
-  //     ),
-  //   );
-  // }
 
   Widget _buildErrorState() {
     return Padding(
