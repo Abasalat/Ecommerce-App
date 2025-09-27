@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/product_repository.dart';
 import '../../data/models/product.dart';
+import 'package:ecommerce_app/presentation/screens/product/product_detail_screen.dart';
 
 // Just For You product data model
 class JustForYouItem {
@@ -22,7 +23,7 @@ class JustForYouItem {
 class JustForYouSection extends StatefulWidget {
   final ProductRepository productRepository;
   final String title;
-  final Function(JustForYouItem)? onProductTap;
+  final Function(Product)? onProductTap;
 
   const JustForYouSection({
     super.key,
@@ -36,10 +37,12 @@ class JustForYouSection extends StatefulWidget {
 }
 
 class _JustForYouSectionState extends State<JustForYouSection> {
-  // Show shimmer immediately on first build
   bool _isLoading = false;
   bool _isLoadingMore = false;
   bool _hasError = false;
+
+  // Add this line - the missing variable
+  List<Product> _originalProducts = [];
 
   List<JustForYouItem> _allProducts = [];
   List<JustForYouItem> _displayedProducts = [];
@@ -64,6 +67,9 @@ class _JustForYouSectionState extends State<JustForYouSection> {
       final products = await widget.productRepository.fetchJustForYouProducts(
         limit: 50, // Load more products to have data for pagination
       );
+
+      // Store the original products
+      _originalProducts = products;
 
       final justForYouItems = products
           .map(
@@ -197,7 +203,16 @@ class _JustForYouSectionState extends State<JustForYouSection> {
 
   Widget _buildProductCard(JustForYouItem product) {
     return GestureDetector(
-      onTap: () => widget.onProductTap?.call(product),
+      onTap: () {
+        // Find the original product
+        final originalProduct = _originalProducts.firstWhere(
+          (p) => p.id.toString() == product.id,
+        );
+
+        if (widget.onProductTap != null) {
+          widget.onProductTap!(originalProduct);
+        }
+      },
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
@@ -363,18 +378,6 @@ class _JustForYouSectionState extends State<JustForYouSection> {
     );
   }
 
-  // Widget _buildLoadingImage() {
-  //   return Container(
-  //     color: AppColors.inputFillColor,
-  //     child: Center(
-  //       child: CircularProgressIndicator(
-  //         strokeWidth: 2,
-  //         color: AppColors.primaryColor,
-  //       ),
-  //     ),
-  //   );
-  // }
-
   Widget _buildErrorImage() {
     return Container(
       color: AppColors.inputFillColor,
@@ -387,35 +390,6 @@ class _JustForYouSectionState extends State<JustForYouSection> {
       ),
     );
   }
-
-  // Widget _buildLoadingState() {
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(horizontal: 16),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Text(
-  //           widget.title,
-  //           style: TextStyle(
-  //             color: AppColors.textPrimary,
-  //             fontSize: 20,
-  //             fontWeight: FontWeight.bold,
-  //           ),
-  //         ),
-  //         const SizedBox(height: 16),
-  //         SizedBox(
-  //           height: 200,
-  //           child: Center(
-  //             child: CircularProgressIndicator(
-  //               color: AppColors.primaryColor,
-  //               strokeWidth: 3,
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildErrorState() {
     return Padding(
