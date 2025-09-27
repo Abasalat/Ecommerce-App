@@ -282,16 +282,6 @@ class _HomeScreenState extends State {
                           ),
                         );
                       },
-                      // onProductTap: (product) {
-                      //   // Find the original product from your data
-
-                      //   Navigator.of(context, rootNavigator: true).push(
-                      //     MaterialPageRoute(
-                      //       builder: (context) =>
-                      //           ProductDetailScreen(product: product),
-                      //     ),
-                      //   );
-                      // },
                       onProductTapFull: (Product p) {
                         Navigator.of(context, rootNavigator: true).push(
                           MaterialPageRoute(
@@ -312,7 +302,14 @@ class _HomeScreenState extends State {
                   : JustForYouSection(
                       productRepository: _productRepo,
                       title: 'Just For You',
-                      onProductTap: (p) {},
+                      onProductTap: (product) {
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ProductDetailScreen(product: product),
+                          ),
+                        );
+                      },
                     ),
             ),
           ),

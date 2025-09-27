@@ -96,8 +96,8 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: _currentIndex == index
-                ? Colors.white
-                : Colors.white.withOpacity(0.4),
+                ? AppColors.primaryColor
+                : AppColors.textTertiary,
           ),
         );
       }),
