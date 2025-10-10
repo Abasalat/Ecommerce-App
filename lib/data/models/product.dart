@@ -147,6 +147,31 @@ class Product {
       meta: m,
     );
   }
+  // 🆕 Add this toJson method for serialization
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'category': category,
+      'price': price,
+      'discountPercentage': discountPercentage,
+      'rating': rating,
+      'stock': stock,
+      'tags': tags,
+      'brand': brand,
+      'sku': sku,
+      'weight': weight,
+      'warrantyInformation': warrantyInformation,
+      'shippingInformation': shippingInformation,
+      'availabilityStatus': availabilityStatus,
+      'returnPolicy': returnPolicy,
+      'minimumOrderQuantity': minimumOrderQuantity,
+      'thumbnail': thumbnail,
+      'images': images,
+      // Add any other fields your Product model has
+    };
+  }
 }
 
 class Dimensions {

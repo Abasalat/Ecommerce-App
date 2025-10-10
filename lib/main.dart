@@ -5,6 +5,7 @@ import 'package:ecommerce_app/core/providers/nav_provider.dart';
 import 'package:ecommerce_app/core/providers/theme_provider.dart';
 import 'package:ecommerce_app/core/providers/wishlist_provider.dart';
 import 'package:ecommerce_app/data/repositories/product_repository.dart';
+import 'package:ecommerce_app/viewmodels/home_viewmodel.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -33,6 +34,10 @@ class MyApp extends StatelessWidget {
         // Create ONE ProductRepository derived from ApiClient
         ProxyProvider<ApiClient, ProductRepository>(
           update: (_, api, __) => ProductRepository(api),
+        ),
+        // Registering the HomeViewModel provider
+        ChangeNotifierProvider(
+          create: (_) => HomeViewModel(ProductRepository(ApiClient())),
         ),
 
         // Your existing providers...

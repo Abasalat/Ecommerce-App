@@ -41,6 +41,7 @@ dependencies:
   provider: ^6.1.5
   shimmer: ^3.0.0
   shared_preferences: ^2.2.3
+  carousel_slider: ^5.1.1
 
 dev_dependencies:
   flutter_test:
