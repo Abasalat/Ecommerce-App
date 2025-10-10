@@ -1,17 +1,22 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ecommerce_app/core/providers/theme_provider.dart';
 import 'package:ecommerce_app/data/models/product.dart';
 import 'package:ecommerce_app/data/repositories/category_repository.dart';
 import 'package:ecommerce_app/data/repositories/product_repository.dart';
+import 'package:ecommerce_app/presentation/screens/cart/cart_screen.dart';
 import 'package:ecommerce_app/presentation/screens/category/category_products_screen.dart';
 import 'package:ecommerce_app/presentation/screens/mostPopular/most_popular_products_screen.dart';
 import 'package:ecommerce_app/presentation/screens/newitem/new_items_products_screen.dart';
 import 'package:ecommerce_app/presentation/screens/product/product_detail_screen.dart';
+import 'package:ecommerce_app/presentation/screens/search/search_results_screen.dart';
+import 'package:ecommerce_app/presentation/screens/userprofile/profile_screen.dart';
 import 'package:ecommerce_app/presentation/widgets/flash_sale_section.dart';
 import 'package:ecommerce_app/presentation/widgets/just_for_you_section.dart';
 import 'package:ecommerce_app/presentation/widgets/most_popular_section.dart';
 import 'package:ecommerce_app/presentation/widgets/new_items_section.dart';
 import 'package:ecommerce_app/presentation/widgets/top_products_section.dart';
 import 'package:ecommerce_app/presentation/widgets/shimmer_skeletons.dart';
+import 'package:ecommerce_app/viewmodels/home_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
@@ -29,8 +34,11 @@ class _HomeScreenState extends State {
   late final CategoryRepository _categoryRepo;
   late final ProductRepository _productRepo;
   late final Future<List<CategoryPreview>> _categoriesFuture;
-  late final Future<List<Product>> _topProductsFuture;
-  late final Future<List<Product>> _flashSaleProductsFuture;
+  // late final Future<List<Product>> _topProductsFuture;
+  // late final Future<List<Product>> _flashSaleProductsFuture;
+  final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+  bool _isSearchExpanded = false;
 
   final _scroll = ScrollController();
 
@@ -48,7 +56,8 @@ class _HomeScreenState extends State {
     //final apiClient = const ApiClient();
     //_categoryRepo = CategoryRepository(apiClient);
     //_productRepo = ProductRepository(apiClient);
-
+    // Load products when screen initializes
+    context.read<HomeViewModel>().loadNewProducts();
     // If you kept CategoryRepository local, keep this line:
     final apiClient = context.read<ApiClient>(); // reuse global client
     _categoryRepo = CategoryRepository(apiClient);
@@ -71,6 +80,8 @@ class _HomeScreenState extends State {
   @override
   void dispose() {
     _scroll.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -97,223 +108,392 @@ class _HomeScreenState extends State {
     );
   }
 
+  // ALTERNATIVE DESIGN - More Minimal & Clean
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Theme.of(
-        context,
-      ).appBarTheme.backgroundColor, // Theme-aware
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       automaticallyImplyLeading: false,
-      elevation: 2,
+      elevation: 1,
       shadowColor: AppColors.lightShadow,
-      title: Text(
-        'E-Shop',
-        style: TextStyle(
-          color: AppColors.primaryColor,
-          fontSize: 26,
-          fontWeight: FontWeight.bold,
-        ),
+      centerTitle: false,
+      title: Row(
+        children: [
+          // Gradient App Name
+          ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [
+                AppColors.primaryColor,
+                AppColors.primaryColor.withOpacity(0.7),
+              ],
+            ).createShader(bounds),
+            child: const Text(
+              'E-Shop',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ],
       ),
       actions: [
+        // Theme Toggle - Minimal
         Consumer<ThemeProvider>(
           builder: (context, themeProvider, child) {
-            return IconButton(
-              icon: Icon(
-                themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                color: AppColors.primaryColor,
-                size: 26,
-              ),
-              onPressed: () {
-                themeProvider.toggleTheme();
-              },
-            );
-          },
-        ),
-        IconButton(
-          icon: Icon(Icons.search, color: AppColors.primaryColor, size: 26),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Search feature coming soon!'),
-                backgroundColor: AppColors.infoColor,
-                behavior: SnackBarBehavior.floating,
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: IconButton(
+                icon: Icon(
+                  themeProvider.isDarkMode
+                      ? Icons.wb_sunny_outlined
+                      : Icons.nights_stay_outlined,
+                  color: AppColors.primaryColor,
+                  size: 24,
+                ),
+                onPressed: () {
+                  themeProvider.toggleTheme();
+                },
               ),
             );
           },
         ),
-        IconButton(
-          icon: Icon(
-            Icons.shopping_cart_outlined,
-            color: AppColors.primaryColor,
-            size: 26,
+
+        // Cart with Badge - Minimal
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.shopping_bag_outlined,
+                  color: AppColors.primaryColor,
+                  size: 24,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CartScreen()),
+                  );
+                },
+              ),
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: AppColors.errorColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
           ),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Cart feature coming soon!'),
-                backgroundColor: AppColors.infoColor,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          },
         ),
-        IconButton(
-          icon: Icon(
-            Icons.person_outline,
-            color: AppColors.primaryColor,
-            size: 26,
+
+        // Profile - Minimal
+        Padding(
+          padding: const EdgeInsets.only(left: 4, right: 12),
+          child: IconButton(
+            icon: Icon(
+              Icons.account_circle_outlined,
+              color: AppColors.primaryColor,
+              size: 24,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileScreen()),
+              );
+            },
           ),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Profile feature coming soon!'),
-                backgroundColor: AppColors.infoColor,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          },
         ),
       ],
     );
   }
 
+  // NEW: Separate SliverAppBar ONLY for Search
+
+  Widget _buildSearchSliverAppBar() {
+    return SliverAppBar(
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+      elevation: 0,
+      floating: true,
+      snap: true,
+      pinned: true, // Keep it pinned at top
+      automaticallyImplyLeading: false,
+      toolbarHeight: 75,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).appBarTheme.backgroundColor,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryColor.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
+            child: GestureDetector(
+              onTap: () {
+                // Navigate to search results screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SearchResultsScreen(
+                      searchQuery: _searchController.text,
+                      productRepository: _productRepo,
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.primaryColor.withOpacity(0.25),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryColor.withOpacity(0.12),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Search Icon
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Icon(
+                        Icons.search_rounded,
+                        color: AppColors.primaryColor,
+                        size: 24,
+                      ),
+                    ),
+                    // Search Text
+                    Expanded(
+                      child: Text(
+                        'Search products, categories, prices...',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                    // Filter Icon (optional)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.tune_rounded,
+                          color: AppColors.primaryColor,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Search functionality
+  // IMPORTANT: Update your _performSearch method to navigate properly
+  void _performSearch(String query) {
+    if (query.trim().isEmpty) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SearchResultsScreen(
+          searchQuery: query,
+          productRepository: _productRepo,
+        ),
+      ),
+    );
+  }
+
+  // MODIFY YOUR _buildBody() METHOD
+  // Replace your existing _buildBody with this:
   Widget _buildBody() {
     final physics = _firstSectionLoaded
         ? const BouncingScrollPhysics()
         : const NeverScrollableScrollPhysics();
 
     return SafeArea(
-      child: CustomScrollView(
-        controller: _scroll,
-        physics: physics,
-        slivers: [
-          SliverToBoxAdapter(child: _buildWelcomeBanner()),
+      child: Consumer<HomeViewModel>(
+        builder: (context, viewModel, child) {
+          final newProducts = viewModel.newProducts;
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: _buildSectionHeader(),
-            ),
-          ),
+          if (newProducts.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          // Categories Grid (with shimmer while waiting)
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            sliver: _buildCategoriesGrid(),
-          ),
+          // Wrap CustomScrollView with RefreshIndicator
+          return RefreshIndicator(
+            color: AppColors.primaryColor,
+            backgroundColor: Theme.of(context).cardColor,
+            onRefresh: _handleRefresh,
+            child: CustomScrollView(
+              controller: _scroll,
+              physics: physics,
+              slivers: [
+                _buildSearchSliverAppBar(), // Your search sliver
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: !_firstSectionLoaded || !_topReady
-                  ? const SizedBox.shrink()
-                  : TopProductsSection(
-                      productRepository: _productRepo,
-                      title: 'Top Products',
-                      productLimit: 8,
-                      onSeeAllTap: () {},
-                      onProductTap: (product) {
-                        // Navigate to ProductDetailScreen and pass the selected product
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ProductDetailScreen(product: product),
+                SliverToBoxAdapter(child: _buildWelcomeBanner()),
+                SliverToBoxAdapter(child: _buildCarousel(newProducts)),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: _buildSectionHeader(),
+                  ),
+                ),
+
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  sliver: _buildCategoriesGrid(),
+                ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: !_firstSectionLoaded || !_topReady
+                        ? const SizedBox.shrink()
+                        : TopProductsSection(
+                            productRepository: _productRepo,
+                            title: 'Top Products',
+                            productLimit: 8,
+                            onSeeAllTap: () {},
+                            onProductTap: (product) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ProductDetailScreen(product: product),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-            ),
-          ),
+                  ),
+                ),
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: !_firstSectionLoaded || !_newReady
-                  ? const SizedBox.shrink()
-                  : NewItemsSection(
-                      productRepository: _productRepo,
-                      title: 'New Items',
-                      productLimit: 8,
-                      // SEE ALL -> open the full list page, hide bottom bar
-                      onSeeAllTap: () {
-                        Navigator.of(context, rootNavigator: true).push(
-                          MaterialPageRoute(
-                            builder: (_) => const NewItemsProductsScreen(),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: !_firstSectionLoaded || !_newReady
+                        ? const SizedBox.shrink()
+                        : NewItemsSection(
+                            productRepository: _productRepo,
+                            title: 'New Items',
+                            productLimit: 8,
+                            onSeeAllTap: () {
+                              Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const NewItemsProductsScreen(),
+                                ),
+                              );
+                            },
+                            onProductTapFull: (Product p) {
+                              Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ProductDetailScreen(product: p),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                      // Tap on a card -> open Product Detail, hide bottom bar
-                      onProductTapFull: (Product p) {
-                        Navigator.of(context, rootNavigator: true).push(
-                          MaterialPageRoute(
-                            builder: (_) => ProductDetailScreen(product: p),
-                          ),
-                        );
-                      },
-                      // (optional) you can still keep onProductTap: (NewProductItem i) { ... }
-                    ),
-            ),
-          ),
+                  ),
+                ),
 
-          // ---- Flash Sale ----
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: !_firstSectionLoaded || !_flashReady
-                  ? const SizedBox.shrink() // was: _FlashSaleShimmer()
-                  : FlashSaleSection(productRepository: _productRepo),
-            ),
-          ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: !_firstSectionLoaded || !_flashReady
+                        ? const SizedBox.shrink()
+                        : FlashSaleSection(productRepository: _productRepo),
+                  ),
+                ),
 
-          // ---- Most Popular ----
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: !_firstSectionLoaded || !_popularReady
-                  ? const SizedBox.shrink() // was: _MostPopularShimmer()
-                  : MostPopularSection(
-                      productRepository: _productRepo,
-                      title: 'Most Popular',
-                      productLimit: 8,
-                      onSeeAllTap: () {
-                        Navigator.of(context, rootNavigator: true).push(
-                          MaterialPageRoute(
-                            builder: (_) => MostPopularProductsScreen(),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: !_firstSectionLoaded || !_popularReady
+                        ? const SizedBox.shrink()
+                        : MostPopularSection(
+                            productRepository: _productRepo,
+                            title: 'Most Popular',
+                            productLimit: 8,
+                            onSeeAllTap: () {
+                              Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  builder: (_) => MostPopularProductsScreen(),
+                                ),
+                              );
+                            },
+                            onProductTapFull: (Product p) {
+                              Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ProductDetailScreen(product: p),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                      onProductTapFull: (Product p) {
-                        Navigator.of(context, rootNavigator: true).push(
-                          MaterialPageRoute(
-                            builder: (_) => ProductDetailScreen(product: p),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ),
+                  ),
+                ),
 
-          // ---- Just For You ----
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: !_firstSectionLoaded || !_jfyReady
-                  ? const SizedBox.shrink() // was: _JustForYouShimmer()
-                  : JustForYouSection(
-                      productRepository: _productRepo,
-                      title: 'Just For You',
-                      onProductTap: (product) {
-                        Navigator.of(context, rootNavigator: true).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                ProductDetailScreen(product: product),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: !_firstSectionLoaded || !_jfyReady
+                        ? const SizedBox.shrink()
+                        : JustForYouSection(
+                            productRepository: _productRepo,
+                            title: 'Just For You',
+                            onProductTap: (product) {
+                              Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ProductDetailScreen(product: product),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -373,6 +553,123 @@ class _HomeScreenState extends State {
         ],
       ),
     );
+  }
+
+  Widget _buildCarousel(List<Product> newProducts) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+
+      height: 200, // Adjust the height as per your design
+      child: CarouselSlider.builder(
+        itemCount: newProducts.length,
+        itemBuilder: (context, index, realIndex) {
+          // Fetch the image URL for the carousel
+          final product = newProducts[index];
+          final imageUrl = product.images.isNotEmpty
+              ? product.images.first
+              : product.thumbnail; // Use thumbnail if no images
+
+          return InkWell(
+            onTap: () {
+              // Navigate to the product details screen and pass the selected product
+              Navigator.of(context, rootNavigator: true).push(
+                MaterialPageRoute(
+                  builder: (context) => ProductDetailScreen(product: product),
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(
+                16,
+              ), // Makes the card circular
+              child: Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryColor.withOpacity(
+                        0.9,
+                      ), // Shadow color with opacity
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, 2), // Adjust shadow position
+                    ),
+                  ],
+                ),
+                child: Image.network(
+                  imageUrl!,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
+              ),
+            ),
+          );
+        },
+        options: CarouselOptions(
+          autoPlay: true,
+          enlargeCenterPage: true,
+          aspectRatio: 16 / 10,
+          enableInfiniteScroll: true,
+          initialPage: 0,
+        ),
+      ),
+    );
+  }
+
+  // Add this method after your existing methods
+  Future<void> _handleRefresh() async {
+    try {
+      // Refresh products cache
+      await _productRepo.refreshProducts();
+
+      // Refresh categories cache and get new data
+      final newCategories = await _categoryRepo.refreshPreviews(
+        categoryLimit: 6,
+        productPerCategory: 4,
+      );
+
+      // Reload new products in ViewModel
+      await context.read<HomeViewModel>().loadNewProducts();
+
+      // Update categories future with fresh data
+      setState(() {
+        _categoriesFuture = Future.value(newCategories);
+        _topReady = false;
+        _newReady = false;
+        _flashReady = false;
+        _popularReady = false;
+        _jfyReady = false;
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: AppColors.textWhite),
+                const SizedBox(width: 8),
+                const Text('Content refreshed successfully!'),
+              ],
+            ),
+            backgroundColor: AppColors.successColor,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to refresh: $e'),
+            backgroundColor: AppColors.errorColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildSectionHeader() {
