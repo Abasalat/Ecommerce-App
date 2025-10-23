@@ -86,7 +86,7 @@ class _WishlistScreenState extends State<WishlistScreen>
           'My Wishlist',
           style: TextStyle(
             color: AppColors.primaryColor,
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
         ),
