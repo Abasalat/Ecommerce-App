@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CartItem {
   // Basic properties - the data we store for each cart item
   final int productId; // Links to original product
@@ -60,7 +62,30 @@ class CartItem {
 
   // METHOD 4: Create CartItem from JSON (for loading from Firestore)
   // Why do we need this? When we read from Firestore, we get JSON/Map
+  // FIXED: Now handles both Timestamp and int types from Firestore
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    // Handle addedAt field - can be Timestamp, int, or null
+    DateTime addedAtDate;
+
+    try {
+      if (json['addedAt'] == null) {
+        // If null, use current time
+        addedAtDate = DateTime.now();
+      } else if (json['addedAt'] is Timestamp) {
+        // If it's a Firestore Timestamp, convert it to DateTime
+        addedAtDate = (json['addedAt'] as Timestamp).toDate();
+      } else if (json['addedAt'] is int) {
+        // If it's milliseconds (int), convert to DateTime
+        addedAtDate = DateTime.fromMillisecondsSinceEpoch(json['addedAt']);
+      } else {
+        // Fallback to current time
+        addedAtDate = DateTime.now();
+      }
+    } catch (e) {
+      print('Error parsing addedAt: $e');
+      addedAtDate = DateTime.now();
+    }
+
     return CartItem(
       productId: json['productId'] ?? 0, // Use 0 if null
       title: json['title'] ?? '', // Use empty string if null
@@ -70,10 +95,7 @@ class CartItem {
       category: json['category'] ?? '',
       brand: json['brand'] ?? '',
       quantity: json['quantity'] ?? 1,
-      // Convert milliseconds back to DateTime
-      addedAt: DateTime.fromMillisecondsSinceEpoch(
-        json['addedAt'] ?? DateTime.now().millisecondsSinceEpoch,
-      ),
+      addedAt: addedAtDate,
     );
   }
 

@@ -29,12 +29,25 @@ class CartService {
         .collection('cart');
   }
 
+  // Debug method to check authentication
+  void checkAuthStatus() {
+    final user = _auth.currentUser;
+    if (user == null) {
+      print('❌ NO USER LOGGED IN!');
+    } else {
+      print('✅ User logged in: ${user.uid}');
+      print('✅ Email: ${user.email}');
+    }
+  }
+
   // ==========================================
   // FIRESTORE OPERATIONS
   // ==========================================
 
   // Add item to cart in Firestore
   Future<void> addToCart(CartItem cartItem) async {
+    checkAuthStatus(); // Debug
+
     if (_cartCollection == null) {
       throw Exception('User not authenticated');
     }
@@ -43,6 +56,7 @@ class CartService {
       // Check if item already exists in cart
       final querySnapshot = await _cartCollection!
           .where('productId', isEqualTo: cartItem.productId)
+          .limit(1)
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
@@ -57,12 +71,15 @@ class CartService {
         });
       } else {
         // Item doesn't exist, add new
-        await _cartCollection!.add(cartItem.toJson());
+        final data = cartItem.toJson();
+        data['addedAt'] = FieldValue.serverTimestamp();
+        await _cartCollection!.add(data);
       }
 
       // Update SharedPreferences totals
       await _updateCartTotals();
     } catch (e) {
+      print('❌ Add to cart error: $e');
       throw Exception('Failed to add item to cart: $e');
     }
   }
@@ -82,12 +99,15 @@ class CartService {
           .map((doc) => CartItem.fromJson(doc.data()))
           .toList();
     } catch (e) {
+      print('❌ Get cart items error: $e');
       throw Exception('Failed to get cart items: $e');
     }
   }
 
   // Update item quantity in Firestore
   Future<void> updateItemQuantity(int productId, int newQuantity) async {
+    checkAuthStatus(); // Debug
+
     if (_cartCollection == null) {
       throw Exception('User not authenticated');
     }
@@ -100,25 +120,31 @@ class CartService {
 
       final querySnapshot = await _cartCollection!
           .where('productId', isEqualTo: productId)
+          .limit(1)
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
         final doc = querySnapshot.docs.first;
         await doc.reference.update({
           'quantity': newQuantity,
-          'addedAt': DateTime.now().millisecondsSinceEpoch,
+          'addedAt': FieldValue.serverTimestamp(),
         });
 
         // Update SharedPreferences totals
         await _updateCartTotals();
+      } else {
+        print('⚠️ Product not found in cart');
       }
     } catch (e) {
+      print('❌ Update quantity error: $e');
       throw Exception('Failed to update item quantity: $e');
     }
   }
 
   // Remove item from cart in Firestore
   Future<void> removeFromCart(int productId) async {
+    checkAuthStatus(); // Debug
+
     if (_cartCollection == null) {
       throw Exception('User not authenticated');
     }
@@ -128,19 +154,32 @@ class CartService {
           .where('productId', isEqualTo: productId)
           .get();
 
-      for (final doc in querySnapshot.docs) {
-        await doc.reference.delete();
+      if (querySnapshot.docs.isEmpty) {
+        print('⚠️ No items found to remove');
+        return;
       }
+
+      // Use batch for multiple deletions
+      final batch = _firestore.batch();
+      for (final doc in querySnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+
+      print('✅ Item removed successfully');
 
       // Update SharedPreferences totals
       await _updateCartTotals();
     } catch (e) {
+      print('❌ Remove from cart error: $e');
       throw Exception('Failed to remove item from cart: $e');
     }
   }
 
   // Clear entire cart
   Future<void> clearCart() async {
+    checkAuthStatus(); // Debug
+
     if (_cartCollection == null) {
       throw Exception('User not authenticated');
     }
@@ -148,29 +187,56 @@ class CartService {
     try {
       final querySnapshot = await _cartCollection!.get();
 
-      for (final doc in querySnapshot.docs) {
-        await doc.reference.delete();
+      if (querySnapshot.docs.isEmpty) {
+        print('⚠️ Cart is already empty');
+        await _clearCartTotals();
+        return;
       }
+
+      // Use batch delete for better performance and reliability
+      final batch = _firestore.batch();
+      for (final doc in querySnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+
+      print('✅ Cart cleared successfully (${querySnapshot.docs.length} items)');
 
       // Clear SharedPreferences
       await _clearCartTotals();
     } catch (e) {
+      print('❌ Clear cart error: $e');
       throw Exception('Failed to clear cart: $e');
     }
   }
 
   // Get cart stream for real-time updates
   Stream<List<CartItem>> getCartStream() {
+    checkAuthStatus(); // Debug
+
     if (_cartCollection == null) {
+      print('⚠️ No user authenticated, returning empty stream');
       return Stream.value([]);
     }
 
     return _cartCollection!
         .orderBy('addedAt', descending: true)
         .snapshots()
+        .handleError((error) {
+          print('❌ Cart stream error: $error');
+          return <CartItem>[];
+        })
         .map((snapshot) {
           final items = snapshot.docs
-              .map((doc) => CartItem.fromJson(doc.data()))
+              .map((doc) {
+                try {
+                  return CartItem.fromJson(doc.data());
+                } catch (e) {
+                  print('❌ Error parsing cart item: $e');
+                  return null;
+                }
+              })
+              .whereType<CartItem>()
               .toList();
 
           // Update SharedPreferences whenever cart changes
@@ -203,8 +269,12 @@ class CartService {
       await prefs.setDouble(_cartSubtotalKey, subtotal);
       await prefs.setDouble(_cartTotalKey, total);
       await prefs.setInt(_cartItemCountKey, itemCount);
+
+      print(
+        '✅ Cart totals updated: $itemCount items, \$${total.toStringAsFixed(2)}',
+      );
     } catch (e) {
-      print('Error updating cart totals: $e');
+      print('❌ Error updating cart totals: $e');
     }
   }
 
@@ -232,6 +302,7 @@ class CartService {
     await prefs.remove(_cartTotalKey);
     await prefs.remove(_cartSubtotalKey);
     await prefs.remove(_cartItemCountKey);
+    print('✅ Cart totals cleared from SharedPreferences');
   }
 
   // ==========================================
@@ -245,10 +316,12 @@ class CartService {
     try {
       final querySnapshot = await _cartCollection!
           .where('productId', isEqualTo: productId)
+          .limit(1)
           .get();
 
       return querySnapshot.docs.isNotEmpty;
     } catch (e) {
+      print('❌ Error checking if product in cart: $e');
       return false;
     }
   }
@@ -260,6 +333,7 @@ class CartService {
     try {
       final querySnapshot = await _cartCollection!
           .where('productId', isEqualTo: productId)
+          .limit(1)
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
@@ -269,6 +343,7 @@ class CartService {
 
       return 0;
     } catch (e) {
+      print('❌ Error getting product quantity: $e');
       return 0;
     }
   }
@@ -280,6 +355,7 @@ class CartService {
       final total = await getCartTotal();
       return subtotal - total;
     } catch (e) {
+      print('❌ Error calculating discount: $e');
       return 0.0;
     }
   }

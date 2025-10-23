@@ -1,4 +1,5 @@
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:ecommerce_app/core/providers/nav_provider.dart';
 import 'package:ecommerce_app/core/providers/theme_provider.dart';
 import 'package:ecommerce_app/data/models/product.dart';
 import 'package:ecommerce_app/data/repositories/category_repository.dart';
@@ -173,12 +174,13 @@ class _HomeScreenState extends State {
                   size: 24,
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CartScreen()),
-                  );
+                  // CHANGE THIS: Switch to Cart tab instead of pushing
+                  context.read<NavProvider>().setIndex(
+                    3,
+                  ); // 3 is Cart tab index
                 },
               ),
+
               Positioned(
                 right: 6,
                 top: 6,
@@ -205,10 +207,8 @@ class _HomeScreenState extends State {
               size: 24,
             ),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfileScreen()),
-              );
+              // Switch to Profile tab instead of pushing
+              context.read<NavProvider>().setIndex(4); // 4 is Profile tab index
             },
           ),
         ),

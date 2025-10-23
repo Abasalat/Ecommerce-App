@@ -1,12 +1,13 @@
+import 'package:ecommerce_app/presentation/screens/product/product_detail_screen.dart';
 import 'package:ecommerce_app/presentation/widgets/new_items_section.dart';
+import 'package:ecommerce_app/presentation/widgets/just_for_you_section.dart';
+import 'package:ecommerce_app/core/providers/nav_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/utils/text_utils.dart';
 import 'package:ecommerce_app/core/providers/wishlist_provider.dart';
 
-// read shared repo provided in main.dart
 import '../../../data/repositories/product_repository.dart';
 
 class WishlistScreen extends StatefulWidget {
@@ -24,14 +25,14 @@ class _WishlistScreenState extends State<WishlistScreen>
 
   final _scroll = ScrollController();
   bool _firstBlockShown = false;
-  bool _newReady = false;
+  bool _jfyReady = false;
   bool _postFrameChecked = false;
 
   @override
   void initState() {
     super.initState();
     _productRepo = context.read<ProductRepository>();
-    _scroll.addListener(_maybeStartLazyNewItems);
+    _scroll.addListener(_maybeStartLazyJustForYou);
 
     // Heart animation setup
     _heartAnimationController = AnimationController(
@@ -56,13 +57,14 @@ class _WishlistScreenState extends State<WishlistScreen>
     super.dispose();
   }
 
-  void _maybeStartLazyNewItems() {
+  void _maybeStartLazyJustForYou() {
     if (!_firstBlockShown) return;
     final offset = _scroll.position.pixels;
     final vp = _scroll.position.viewportDimension;
 
-    if (!_newReady && offset > vp * 0.40) {
-      setState(() => _newReady = true);
+    // Trigger Just For You section when scrolled 40% of viewport
+    if (!_jfyReady && offset > vp * 0.40) {
+      setState(() => _jfyReady = true);
     }
   }
 
@@ -83,7 +85,7 @@ class _WishlistScreenState extends State<WishlistScreen>
         title: Text(
           'My Wishlist',
           style: TextStyle(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.primaryColor,
+            color: AppColors.primaryColor,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -137,8 +139,8 @@ class _WishlistScreenState extends State<WishlistScreen>
               final viewport = pos.viewportDimension;
               final needsScrollToGate = viewport * 0.40;
               final canReachGate = pos.maxScrollExtent >= needsScrollToGate;
-              if (!canReachGate && !_newReady) {
-                setState(() => _newReady = true);
+              if (!canReachGate && !_jfyReady) {
+                setState(() => _jfyReady = true);
               }
             });
           }
@@ -153,7 +155,7 @@ class _WishlistScreenState extends State<WishlistScreen>
                 )
               else ...[
                 if (wish.items.isEmpty) ...[
-                  // Empty state with heart icon and some items section
+                  // Empty state with heart icon
                   SliverToBoxAdapter(
                     child: _EmptyWishlistContent(
                       heartAnimation: _heartAnimation,
@@ -207,7 +209,7 @@ class _WishlistScreenState extends State<WishlistScreen>
                     ),
                   ),
 
-                  // Wishlist items -d and list
+                  // Wishlist items list
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverList(
@@ -218,9 +220,12 @@ class _WishlistScreenState extends State<WishlistScreen>
                           price: item.price,
                           thumbnail: item.thumbnail,
                           isDark: isDark,
-                          onRemove: () => context
-                              .read<WishlistProvider>()
-                              .remove(item.productId),
+                          onRemove: () => _showRemoveDialog(
+                            context,
+                            item.productId,
+                            item.title,
+                            isDark,
+                          ),
                           onOpen: () {
                             // TODO: Navigate to product detail
                           },
@@ -230,19 +235,25 @@ class _WishlistScreenState extends State<WishlistScreen>
                   ),
                 ],
 
-                // New Items Section
+                // Just For You Section - Always shows when ready
                 SliverToBoxAdapter(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 24),
-                    child: (wish.items.isEmpty || _newReady)
-                        ? NewItemsSection(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 24, bottom: 20),
+                    child: !_firstBlockShown || !_jfyReady
+                        ? const SizedBox.shrink()
+                        : JustForYouSection(
                             productRepository: _productRepo,
-                            title: 'Discover New Items',
-                            productLimit: 8,
-                            onSeeAllTap: () {},
-                            onProductTap: (p) {},
-                          )
-                        : const SizedBox.shrink(),
+                            title: 'Just For You',
+                            onProductTap: (product) {
+                              // TODO: Navigate to product detail
+                              Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ProductDetailScreen(product: product),
+                                ),
+                              );
+                            },
+                          ),
                   ),
                 ),
 
@@ -252,6 +263,99 @@ class _WishlistScreenState extends State<WishlistScreen>
             ],
           );
         },
+      ),
+    );
+  }
+
+  void _showRemoveDialog(
+    BuildContext context,
+    int productId,
+    String productTitle,
+    bool isDark,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark
+            ? AppColors.darkCardColor
+            : AppColors.surfaceColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.favorite_border, color: AppColors.errorColor, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Remove from Wishlist?',
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to remove "$productTitle" from your wishlist?',
+          style: TextStyle(
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<WishlistProvider>().remove(productId);
+
+              // Show success message
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('Removed from wishlist')),
+                    ],
+                  ),
+                  backgroundColor: AppColors.successColor,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.errorColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
       ),
     );
   }
@@ -268,83 +372,81 @@ class _EmptyWishlistContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Empty state with animated heart
-        Container(
-          height: MediaQuery.of(context).size.height * 0.4,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AnimatedBuilder(
-                    animation: heartAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: heartAnimation.value,
-                        child: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryColor.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.favorite,
-                            size: 60,
-                            color: AppColors.primaryColor,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Your Wishlist is Empty',
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.textPrimary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Save items you love to find them easily later',
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.textSecondary,
-                      fontSize: 16,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.shopping_bag_outlined),
-                    label: const Text('Start Shopping'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.4,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedBuilder(
+                animation: heartAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: heartAnimation.value,
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
+                      child: Icon(
+                        Icons.favorite,
+                        size: 60,
+                        color: AppColors.primaryColor,
                       ),
-                      elevation: 2,
                     ),
-                  ),
-                ],
+                  );
+                },
               ),
-            ),
+              const SizedBox(height: 24),
+              Text(
+                'Your Wishlist is Empty',
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Save items you love to find them easily later',
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.textSecondary,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  // Navigate to Home tab (index 0)
+                  context.read<NavProvider>().setIndex(0);
+                },
+                icon: const Icon(Icons.shopping_bag_outlined),
+                label: const Text('Start Shopping'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  elevation: 2,
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
