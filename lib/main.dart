@@ -5,6 +5,7 @@ import 'package:ecommerce_app/core/providers/nav_provider.dart';
 import 'package:ecommerce_app/core/providers/theme_provider.dart';
 import 'package:ecommerce_app/core/providers/wishlist_provider.dart';
 import 'package:ecommerce_app/data/repositories/product_repository.dart';
+import 'package:ecommerce_app/presentation/screens/auth/wrapper/auth_wrapper.dart';
 import 'package:ecommerce_app/viewmodels/home_viewmodel.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,6 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -51,9 +51,10 @@ class MyApp extends StatelessWidget {
           title: 'E-Commerce App',
           debugShowCheckedModeBanner: false,
           themeMode: themeProvider.themeMode,
-          theme: AppTheme.lightTheme, // your light theme
-          darkTheme: AppTheme.darkTheme, // your dark theme
-          initialRoute: RoutesName.getStartedScreen,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          home:
+              const AuthWrapper(), // CHANGED: Use AuthWrapper instead of initialRoute
           onGenerateRoute: Routes.generateRoute,
         ),
       ),

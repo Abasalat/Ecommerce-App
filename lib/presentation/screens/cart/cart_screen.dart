@@ -123,7 +123,7 @@ class _CartScreenState extends State<CartScreen> {
               'My Cart',
               style: TextStyle(
                 color: AppColors.primaryColor,
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
               ),

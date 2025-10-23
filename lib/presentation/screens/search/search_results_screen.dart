@@ -1072,7 +1072,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            '\${product.price!.toStringAsFixed(2)}',
+                            '${product.price!.toStringAsFixed(2)}',
                             style: TextStyle(
                               color: AppColors.primaryColor,
                               fontSize: 19,
