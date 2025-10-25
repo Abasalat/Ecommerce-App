@@ -208,7 +208,7 @@ https://drive.google.com/file/d/1Jqb82D0n7l5m4Q-ozyQo3W1Hh-tjewVU/view?usp=drive
 ## **Setup and Installation**
 
 1. **Clone the repository**:  
-   `git clone https://github.com/your-username/e-commerce-app.git`
+   `git clone [https://github.com/Abasalat/Ecommerce-App.git]`
 
 2. **Install dependencies**:  
    Run `flutter pub get` to install required packages.
