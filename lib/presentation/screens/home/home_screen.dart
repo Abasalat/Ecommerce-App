@@ -1,4 +1,5 @@
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:ecommerce_app/core/providers/cart_provider.dart';
 import 'package:ecommerce_app/core/providers/nav_provider.dart';
 import 'package:ecommerce_app/core/providers/theme_provider.dart';
 import 'package:ecommerce_app/data/models/product.dart';
@@ -31,10 +32,15 @@ class HomeScreen extends StatefulWidget {
   State createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State {
+class _HomeScreenState extends State<HomeScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   late final CategoryRepository _categoryRepo;
   late final ProductRepository _productRepo;
   late final Future<List<CategoryPreview>> _categoriesFuture;
+  bool _categoriesFutureInitialized = false; // Flag to track initialization
   // late final Future<List<Product>> _topProductsFuture;
   // late final Future<List<Product>> _flashSaleProductsFuture;
   final _searchController = TextEditingController();
@@ -65,11 +71,16 @@ class _HomeScreenState extends State {
 
     _productRepo = context.read<ProductRepository>();
     // Start data fetching
-    _categoriesFuture = _categoryRepo.fetchTopCategoriesWithPreviews(
-      categoryLimit: 6,
-      productPerCategory: 4,
-    );
-
+    // Initialize categories future only if it's not already initialized
+    if (!_categoriesFutureInitialized) {
+      _categoriesFuture = _categoryRepo.fetchTopCategoriesWithPreviews(
+        categoryLimit: 6,
+        productPerCategory: 4,
+      );
+      _categoriesFutureInitialized = true;
+    }
+    // Start data fetching
+    context.read<HomeViewModel>().loadNewProducts();
     // when categories resolve (success OR error), unlock scroll
     _categoriesFuture.whenComplete(() {
       if (mounted) setState(() => _firstSectionLoaded = true);
@@ -102,6 +113,7 @@ class _HomeScreenState extends State {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Must call this with AutomaticKeepAliveClientMixin
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _buildAppBar(),
@@ -164,36 +176,65 @@ class _HomeScreenState extends State {
         // Cart with Badge - Minimal
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              IconButton(
-                icon: Icon(
-                  Icons.shopping_bag_outlined,
-                  color: AppColors.primaryColor,
-                  size: 24,
-                ),
-                onPressed: () {
-                  // CHANGE THIS: Switch to Cart tab instead of pushing
-                  context.read<NavProvider>().setIndex(
-                    3,
-                  ); // 3 is Cart tab index
-                },
-              ),
+          child: Consumer<CartProvider>(
+            builder: (context, cartProvider, child) {
+              final itemCounts = cartProvider.itemCount;
 
-              Positioned(
-                right: 6,
-                top: 6,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: AppColors.errorColor,
-                    shape: BoxShape.circle,
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.shopping_bag_outlined,
+                      color: AppColors.primaryColor,
+                      size: 24,
+                    ),
+                    onPressed: () {
+                      // CHANGE THIS: Switch to Cart tab instead of pushing
+                      context.read<NavProvider>().setIndex(
+                        3,
+                      ); // 3 is Cart tab index
+                    },
                   ),
-                ),
-              ),
-            ],
+
+                  if (itemCounts > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppColors.errorColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.black.withOpacity(0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Center(
+                          child: Text(
+                            itemCounts > 99 ? "99+" : '$itemCounts',
+                            style: const TextStyle(
+                              color: AppColors.textWhite,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              height: 1,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ),
 
@@ -544,10 +585,18 @@ class _HomeScreenState extends State {
               color: AppColors.textWhite.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              Icons.shopping_bag,
-              size: 32,
-              color: AppColors.textWhite,
+            child: IconButton(
+              icon: Icon(
+                Icons.shopping_bag,
+                size: 32,
+                color: AppColors.textWhite,
+              ),
+              onPressed: () {
+                // Switch to Profile tab instead of pushing
+                context.read<NavProvider>().setIndex(
+                  3,
+                ); // 4 is Profile tab index
+              },
             ),
           ),
         ],
@@ -620,44 +669,52 @@ class _HomeScreenState extends State {
   // Add this method after your existing methods
   Future<void> _handleRefresh() async {
     try {
-      // Refresh products cache
-      await _productRepo.refreshProducts();
+      // Check if categories future is initialized
+      if (!_categoriesFutureInitialized) {
+        // Refresh products cache
+        await _productRepo.refreshProducts();
 
-      // Refresh categories cache and get new data
-      final newCategories = await _categoryRepo.refreshPreviews(
-        categoryLimit: 6,
-        productPerCategory: 4,
-      );
-
-      // Reload new products in ViewModel
-      await context.read<HomeViewModel>().loadNewProducts();
-
-      // Update categories future with fresh data
-      setState(() {
-        _categoriesFuture = Future.value(newCategories);
-        _topReady = false;
-        _newReady = false;
-        _flashReady = false;
-        _popularReady = false;
-        _jfyReady = false;
-      });
-
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: AppColors.textWhite),
-                const SizedBox(width: 8),
-                const Text('Content refreshed successfully!'),
-              ],
-            ),
-            backgroundColor: AppColors.successColor,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-          ),
+        // Refresh categories cache and get new data
+        final newCategories = await _categoryRepo.refreshPreviews(
+          categoryLimit: 6,
+          productPerCategory: 4,
         );
+
+        // Reload new products in ViewModel
+        await context.read<HomeViewModel>().loadNewProducts();
+
+        // Update categories future with fresh data
+        setState(() {
+          _categoriesFuture = Future.value(newCategories);
+          _categoriesFutureInitialized = true;
+        });
+
+        // Reset loading flags
+        setState(() {
+          _topReady = false;
+          _newReady = false;
+          _flashReady = false;
+          _popularReady = false;
+          _jfyReady = false;
+        });
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle, color: AppColors.textWhite),
+                  const SizedBox(width: 8),
+                  const Text('Content refreshed successfully!'),
+                ],
+              ),
+              backgroundColor: AppColors.successColor,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

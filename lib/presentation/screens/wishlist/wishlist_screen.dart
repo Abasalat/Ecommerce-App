@@ -18,7 +18,9 @@ class WishlistScreen extends StatefulWidget {
 }
 
 class _WishlistScreenState extends State<WishlistScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true; // Keeps the state alive when switching tabs
   late final ProductRepository _productRepo;
   late AnimationController _heartAnimationController;
   late Animation<double> _heartAnimation;
@@ -70,6 +72,7 @@ class _WishlistScreenState extends State<WishlistScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Must call this with AutomaticKeepAliveClientMixin
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(

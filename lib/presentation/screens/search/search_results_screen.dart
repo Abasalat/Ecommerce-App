@@ -43,7 +43,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
   // Animation controller for filter panel
   late AnimationController _filterAnimationController;
   late Animation<double> _filterSlideAnimation;
-  late Animation<double> _filterFadeAnimation;
 
   @override
   void initState() {
@@ -55,17 +54,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
     // Initialize animation controller
     _filterAnimationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 350),
     );
 
     _filterSlideAnimation = CurvedAnimation(
       parent: _filterAnimationController,
-      curve: Curves.easeOutCubic,
-    );
-
-    _filterFadeAnimation = CurvedAnimation(
-      parent: _filterAnimationController,
-      curve: Curves.easeIn,
+      curve: Curves.easeInOut,
     );
 
     _searchController.addListener(() {
@@ -198,7 +192,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
   }
 
   void _toggleFilters() {
-    // 🔒 Hide keyboard before animating the panel to avoid height jumps/overflows
+    // Hide keyboard before animating the panel
     FocusScope.of(context).unfocus();
 
     setState(() {
@@ -255,28 +249,17 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _buildAppBar(),
-      body: SafeArea(
-        // ✅ prevents body from being cut by system insets
-        top: false, // AppBar already handles top
-        bottom: true,
-        child: Column(
-          children: [
-            // Filter Panel (animated)
-            SizeTransition(
-              sizeFactor: _filterSlideAnimation,
-              child: FadeTransition(
-                opacity: _filterFadeAnimation,
-                child: _buildFilterPanel(),
-              ),
-            ),
-            // Main Content
-            Expanded(
-              child: _showHistory
-                  ? _buildSearchHistory()
-                  : _buildSearchResults(),
-            ),
-          ],
-        ),
+      body: Stack(
+        children: [
+          // Main Content (Search Results)
+          SafeArea(
+            top: false,
+            bottom: true,
+            child: _showHistory ? _buildSearchHistory() : _buildSearchResults(),
+          ),
+          // Full-screen Filter Overlay
+          if (_showFilters) _buildFilterOverlay(),
+        ],
       ),
     );
   }
@@ -414,6 +397,40 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
         _selectedCategories.isNotEmpty;
   }
 
+  Widget _buildFilterOverlay() {
+    return AnimatedBuilder(
+      animation: _filterSlideAnimation,
+      builder: (context, child) {
+        return Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: GestureDetector(
+            onTap: _toggleFilters,
+            child: Container(
+              color: Colors.black.withOpacity(
+                0.5 * _filterSlideAnimation.value,
+              ),
+              child: GestureDetector(
+                onTap:
+                    () {}, // Prevent tap from closing when tapping filter content
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, -1),
+                    end: Offset.zero,
+                  ).animate(_filterSlideAnimation),
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      child: _buildFilterPanel(),
+    );
+  }
+
   Widget _buildSearchHistory() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,270 +555,303 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
   }
 
   Widget _buildFilterPanel() {
-    final bottomInset = MediaQuery.of(context).padding.bottom; // safe area
-
     return SafeArea(
-      // ✅ make panel respect bottom inset
-      top: false,
-      bottom: true,
       child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.65,
-        ),
+        height: MediaQuery.of(context).size.height,
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryColor.withOpacity(0.15),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: Theme.of(context).scaffoldBackgroundColor,
         ),
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          // ✅ ensure the last button is never under the bottom inset
-          padding: EdgeInsets.only(bottom: 16 + bottomInset),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppColors.primaryColor.withOpacity(0.1),
-                    ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.primaryColor.withOpacity(0.1),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.tune,
-                          color: AppColors.primaryColor,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Filters',
-                          style: TextStyle(
-                            color: Theme.of(context).textTheme.bodyLarge?.color,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextButton(
-                      onPressed: _resetFilters,
-                      child: Text(
-                        'Reset',
-                        style: TextStyle(
-                          color: AppColors.primaryColor,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryColor.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-
-              // Sort By
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sort By',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildSortChip('Relevance', 'relevance'),
-                        _buildSortChip('Price: Low to High', 'price_low'),
-                        _buildSortChip('Price: High to Low', 'price_high'),
-                        _buildSortChip('Rating', 'rating'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              Divider(
-                color: AppColors.primaryColor.withOpacity(0.1),
-                height: 1,
-              ),
-
-              // Categories
-              if (_availableCategories.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
                     children: [
+                      Icon(Icons.tune, color: AppColors.primaryColor, size: 24),
+                      const SizedBox(width: 12),
                       Text(
-                        'Categories',
+                        'Filters',
                         style: TextStyle(
                           color: Theme.of(context).textTheme.bodyLarge?.color,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _availableCategories.map((category) {
-                          return _buildCategoryChip(category);
-                        }).toList(),
                       ),
                     ],
                   ),
-                ),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: _resetFilters,
+                        child: Text(
+                          'Reset',
+                          style: TextStyle(
+                            color: AppColors.primaryColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: AppColors.primaryColor),
+                        onPressed: _toggleFilters,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
-              if (_availableCategories.isNotEmpty)
-                Divider(
-                  color: AppColors.primaryColor.withOpacity(0.1),
-                  height: 1,
-                ),
-
-              // Price Range
-              Padding(
-                padding: const EdgeInsets.all(16),
+            // Scrollable Filter Content
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Price Range',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                    // Sort By
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sort By',
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _buildSortChip('Relevance', 'relevance'),
+                              _buildSortChip('Price: Low to High', 'price_low'),
+                              _buildSortChip(
+                                'Price: High to Low',
+                                'price_high',
+                              ),
+                              _buildSortChip('Rating', 'rating'),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          '\$${_minPrice.toInt()}',
-                          style: TextStyle(
-                            color: AppColors.primaryColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '\$${_maxPrice.toInt()}',
-                          style: TextStyle(
-                            color: AppColors.primaryColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+
+                    Divider(
+                      color: AppColors.primaryColor.withOpacity(0.1),
+                      height: 1,
                     ),
-                    RangeSlider(
-                      values: RangeValues(_minPrice, _maxPrice),
-                      min: 0,
-                      max: 10000,
-                      divisions: 100,
-                      activeColor: AppColors.primaryColor,
-                      inactiveColor: AppColors.primaryColor.withOpacity(0.2),
-                      onChanged: (RangeValues values) {
-                        setState(() {
-                          _minPrice = values.start;
-                          _maxPrice = values.end;
-                        });
-                      },
+
+                    // Categories
+                    if (_availableCategories.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Categories',
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyLarge?.color,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _availableCategories.map((category) {
+                                return _buildCategoryChip(category);
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    if (_availableCategories.isNotEmpty)
+                      Divider(
+                        color: AppColors.primaryColor.withOpacity(0.1),
+                        height: 1,
+                      ),
+
+                    // Price Range
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Price Range',
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Text(
+                                '\$${_minPrice.toInt()}',
+                                style: TextStyle(
+                                  color: AppColors.primaryColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '\$${_maxPrice.toInt()}',
+                                style: TextStyle(
+                                  color: AppColors.primaryColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          RangeSlider(
+                            values: RangeValues(_minPrice, _maxPrice),
+                            min: 0,
+                            max: 10000,
+                            divisions: 100,
+                            activeColor: AppColors.primaryColor,
+                            inactiveColor: AppColors.primaryColor.withOpacity(
+                              0.2,
+                            ),
+                            onChanged: (RangeValues values) {
+                              setState(() {
+                                _minPrice = values.start;
+                                _maxPrice = values.end;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Divider(
+                      color: AppColors.primaryColor.withOpacity(0.1),
+                      height: 1,
+                    ),
+
+                    // Rating Filter
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Minimum Rating',
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.star,
+                                color: AppColors.warningColor,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _minRating.toStringAsFixed(1),
+                                style: TextStyle(
+                                  color: AppColors.warningColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '& above',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.color,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Slider(
+                            value: _minRating,
+                            min: 0,
+                            max: 5,
+                            divisions: 10,
+                            activeColor: AppColors.warningColor,
+                            inactiveColor: AppColors.warningColor.withOpacity(
+                              0.2,
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                _minRating = value;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
+            ),
 
-              Divider(
-                color: AppColors.primaryColor.withOpacity(0.1),
-                height: 1,
+            // Fixed Apply Button at Bottom
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryColor.withOpacity(0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
               ),
-
-              // Rating Filter
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Minimum Rating',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star,
-                          color: AppColors.warningColor,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _minRating.toStringAsFixed(1),
-                          style: TextStyle(
-                            color: AppColors.warningColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '& above',
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.color,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Slider(
-                      value: _minRating,
-                      min: 0,
-                      max: 5,
-                      divisions: 10,
-                      activeColor: AppColors.warningColor,
-                      inactiveColor: AppColors.warningColor.withOpacity(0.2),
-                      onChanged: (value) {
-                        setState(() {
-                          _minRating = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              // Apply Button
-              Padding(
-                padding: const EdgeInsets.all(16),
+              child: SafeArea(
+                top: false,
                 child: SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 54,
                   child: ElevatedButton(
                     onPressed: _applyFiltersToResults,
                     style: ElevatedButton.styleFrom(
@@ -815,15 +865,15 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                     child: const Text(
                       'Apply Filters',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1140,7 +1190,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // ... your existing empty-state UI unchanged ...
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -1217,7 +1266,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // ... your existing error-state UI unchanged ...
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
