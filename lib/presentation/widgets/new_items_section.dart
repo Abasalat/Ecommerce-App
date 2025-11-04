@@ -219,10 +219,7 @@ class _NewItemsSectionState extends State<NewItemsSection> {
               width: double.infinity,
               decoration: BoxDecoration(
                 color: AppColors.inputFillColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
               ),
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(

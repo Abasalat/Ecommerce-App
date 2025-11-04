@@ -107,13 +107,19 @@ class _JustForYouSectionState extends State<JustForYouSection> {
       _isLoadingMore = true;
     });
 
-    await Future.delayed(const Duration(milliseconds: 300)); // Simulate loading
+    await Future.delayed(const Duration(milliseconds: 300));
 
-    final startIndex =
-        _currentPage * _initialLoadCount + (_currentPage - 1) * _loadMoreCount;
+    // Fixed: Use displayed products length instead of complex calculation
+    final remainingProducts = _allProducts.length - _displayedProducts.length;
+    final productsToLoad = remainingProducts < _loadMoreCount
+        ? remainingProducts
+        : _loadMoreCount;
+
     final moreProducts = _allProducts
-        .skip(startIndex)
-        .take(_loadMoreCount)
+        .skip(
+          _displayedProducts.length,
+        ) // Changed from your startIndex calculation
+        .take(productsToLoad)
         .toList();
 
     setState(() {
@@ -301,6 +307,13 @@ class _JustForYouSectionState extends State<JustForYouSection> {
   }
 
   Widget _buildSeeMoreButton() {
+    // Hide button if all products are loaded
+    if (_displayedProducts.length >= _allProducts.length) {
+      return const SizedBox.shrink();
+    }
+
+    final remainingCount = _allProducts.length - _displayedProducts.length;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -326,7 +339,7 @@ class _JustForYouSectionState extends State<JustForYouSection> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'See More',
+                    'See More Products ', //($remainingCount more)
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(width: 8),

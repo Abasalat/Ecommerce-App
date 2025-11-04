@@ -23,7 +23,10 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true; // Keeps the state alive when switching tabs
   final AuthService _authService = AuthService();
   late final ProductRepository _productRepo;
 
@@ -77,6 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Must call this with AutomaticKeepAliveClientMixin
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
